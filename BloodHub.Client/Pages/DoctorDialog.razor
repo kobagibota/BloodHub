@@ -1,0 +1,127 @@
+﻿@using BloodHub.Client.Services
+@using BloodHub.Shared.Entities
+
+@inject DoctorService DoctorService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="@Doctor" OnValidSubmit="OnValidSubmit" Spacing="3">
+            <MudTextField @bind-Value="Doctor.DoctorName" Label="Tên bác sĩ" Required="true" FullWidth="true" @ref="doctorNameInput" />
+            <MudSwitch @bind-Value="Doctor.IsHide" Label="Ẩn" Color="Color.Secondary" />
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Color="Color.Secondary">Hủy</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="isLoading" OnClick="SubmitForm">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            }
+            else
+            {
+                <MudText>@(Doctor.Id == 0 ? "Thêm mới" : "Cập nhật")</MudText>
+            }
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Doctor Doctor { get; set; } = new Doctor();
+
+    private Doctor originalDoctor = new Doctor();
+    private MudForm form = new MudForm();
+    private bool isLoading = false;
+    private MudTextField<string> doctorNameInput = new MudTextField<string>();
+
+    protected override void OnInitialized()
+    {
+        // Sao chép sâu đối tượng ban đầu
+        if (Doctor != null)
+        {
+            originalDoctor = new Doctor
+            {
+                Id = Doctor.Id,
+                DoctorName = Doctor.DoctorName,
+                IsHide = Doctor.IsHide
+            };
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FocusDoctorNameInput(); 
+        } 
+    }
+
+    private async Task SubmitForm()
+    {
+        if (form != null)
+        {
+            await form.Validate();
+            if (form.IsValid)
+            {
+                await OnValidSubmit();
+            }
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true;
+
+        try
+        {
+            var result = Doctor.Id == 0
+                ? await DoctorService.CreateDoctor(Doctor)
+                : await DoctorService.UpdateDoctor(Doctor.Id, Doctor);
+
+            if (!result.Success)
+            {
+                await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
+                await FocusDoctorNameInput();
+                isLoading = false;
+                return;
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }        
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi {ex.Message}.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CloseDialog()
+    {
+        // Khôi phục thông tin bác sĩ ban đầu khi nhấn "Hủy"
+        if (Doctor != null)
+        {
+            Doctor.Id = originalDoctor.Id;
+            Doctor.DoctorName = originalDoctor.DoctorName;
+            Doctor.IsHide = originalDoctor.IsHide;
+        }
+
+        MudDialog.Cancel();
+    }
+
+    private async Task FocusDoctorNameInput()
+    {
+        await Task.Delay(200); // Đợi một chút để đảm bảo rằng thông báo lỗi đã đóng 
+        if (doctorNameInput != null) 
+        { 
+            await doctorNameInput.FocusAsync(); 
+        }
+    }
+}

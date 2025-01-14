@@ -1,0 +1,83 @@
+﻿@page "/login"
+@layout LoginLayout
+
+@using BloodHub.Client.Services
+@using BloodHub.Shared.DTOs
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Đăng nhập</PageTitle>
+
+<MudContainer Class="d-flex justify-center align-center" Style="height: 100vh;">
+    <MudPaper Class="pa-4" Style="width: 400px;">
+        <MudText Typo="Typo.h4" Class="mb-4" Align="Align.Center" Style="color: #1976d2;">Đăng nhập</MudText>
+
+        <MudForm @ref="form" Validated="OnValidSubmit" Spacing="3">
+            <MudTextField @bind-Value="loginDto.UserName" Label="Tài khoản" Required="true"
+						  Variant="Variant.Outlined" FullWidth="true" Disabled="@isLoading"
+						  Clearable="true" Immediate="true" />
+            <MudTextField @bind-Value="loginDto.Password" Label="Mật khẩu" InputType="@PasswordInput"
+						  Clearable="true" Immediate="true" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon"
+						  OnAdornmentClick="ButtonTestclick" AdornmentAriaLabel="Hiện mật khẩu"
+						  Variant="Variant.Outlined" Required="true" FullWidth="true" Disabled="@isLoading" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@isLoading" OnClick="OnValidSubmit" FullWidth="true">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+                }
+                else
+                {
+                    <MudText>Đăng nhập</MudText>
+                }
+            </MudButton>
+        </MudForm>
+
+        <MudText Typo="Typo.subtitle2" Class="mt-2" Color="Color.Error">@errorMessage</MudText>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private MudForm form = new MudForm();
+    private LoginDto loginDto = new LoginDto();
+    private string errorMessage = string.Empty;
+    private bool isLoading = false; // Biến trạng thái để theo dõi việc xử lý đăng nhập
+
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    void ButtonTestclick()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true; // Bắt đầu trạng thái tải
+        errorMessage = string.Empty;
+
+        var result = await AuthService.LoginAsync(loginDto);
+        if (result.Success)
+        {
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = result.Message;
+        }
+
+        isLoading = false; // Kết thúc trạng thái tải
+    }
+}

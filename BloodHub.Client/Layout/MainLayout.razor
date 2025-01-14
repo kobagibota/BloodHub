@@ -1,0 +1,111 @@
+﻿@using BloodHub.Client.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject IAuthService AuthService
+@inject ThemeService ThemeService
+
+<MudPopoverProvider />
+
+<MudDialogProvider FullWidth="true"
+MaxWidth="MaxWidth.ExtraSmall"
+CloseButton="false"
+BackdropClick="false"
+Position="DialogPosition.Center"
+CloseOnEscapeKey="true" />
+
+<MudSnackbarProvider/>
+
+<MudThemeProvider IsDarkMode="ThemeService.IsDarkMode" Theme="@ThemeService.CurrentTheme" />
+
+<MudLayout Class="main-layout">
+    <!-- Appbar -->
+    <MudAppBar Elevation="2" Dense="true">
+        <!-- Logo hoặc tiêu đề -->
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@DrawerToggle" />
+        <MudText Typo="Typo.h6" Class="ml-2">Quản lý kho truyền máu</MudText>
+
+        <!-- Spacer để đẩy các nút sang bên phải -->
+        <MudSpacer />
+
+        <!-- Hiển thị lời chào -->
+        <MudText Typo="Typo.body1" >Chào @_userName</MudText>
+
+        <MudMenu Icon="@Icons.Material.Filled.MoreVert"
+        AriaLabel="Open user menu">
+            <ChildContent>
+                <!-- Toggle Dark Mode -->
+                <MudSwitch @bind-Value="ThemeService.IsDarkMode"
+                OnCheckedChanged="OnDarkModeToggle"
+                ThumbIcon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.Done : Icons.Material.Filled.Close)"
+                ThumbIconColor="@(ThemeService.IsDarkMode ? Color.Success : Color.Error)"
+                T="bool" Label="Dark Mode" Class="m-4" />
+
+                <MudDivider Class="my-2" />
+
+                <MudMenuItem OnClick="NavigateToProfile">Hồ sơ của tôi</MudMenuItem>
+                <MudMenuItem OnClick="Logout">Đăng xuất</MudMenuItem>
+            </ChildContent>
+        </MudMenu> 
+    </MudAppBar>
+
+    <!-- Sidebar -->
+    <MudDrawer @bind-Open="@_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <MudNavMenu>
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" Match="NavLinkMatch.All" IconColor="Color.Primary">Trang chủ</MudNavLink>
+
+            <MudDivider Class="my-2" />
+
+            <MudNavGroup Title="Danh mục" Icon="@Icons.Material.Filled.List" Expanded="true">
+                <MudNavLink Href="/doctors" Icon="@Icons.Material.Filled.Man" IconColor="Color.Success" >Bác sĩ</MudNavLink>
+            </MudNavGroup>
+
+            <MudDivider Class="my-2" />
+
+        </MudNavMenu>
+    </MudDrawer>
+
+    <!-- Main Content -->
+    <MudMainContent Class="main-content">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true; 
+    private string _userName = "Nhân viên"; 
+
+    void DrawerToggle() 
+    { 
+        _drawerOpen = !_drawerOpen; 
+    }
+
+    protected override async Task OnInitializedAsync() 
+    { 
+        ThemeService.OnChange += StateHasChanged;
+
+        _userName = await AuthService.GetCurrentUserAsync();        
+    }
+
+    private void NavigateToProfile() 
+    { 
+        Navigation.NavigateTo("/profile"); 
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login"); 
+    }
+
+    private void OnDarkModeToggle(bool value)
+    {
+        ThemeService.ToggleDarkMode(value);
+    }
+    public void Dispose() 
+    {
+        ThemeService.OnChange -= StateHasChanged; 
+    }
+}

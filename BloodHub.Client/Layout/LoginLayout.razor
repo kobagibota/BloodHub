@@ -1,0 +1,9 @@
+﻿@using BloodHub.Client.Services
+@inherits LayoutComponentBase
+@inject ThemeService ThemeService
+
+<MudThemeProvider IsDarkMode="ThemeService.IsDarkMode" Theme="@ThemeService.CurrentTheme" />
+
+<div>
+    @Body
+</div>

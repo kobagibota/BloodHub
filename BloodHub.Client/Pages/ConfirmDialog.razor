@@ -1,0 +1,28 @@
+﻿@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Class="mr-3 mb-n1" />
+            @Title
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudText Typo="Typo.subtitle1">@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Surface">@CancelButtonText</MudButton>
+        <MudButton OnClick="@(() => MudDialog.Close(DialogResult.Ok(true)))" Color="@Color">@ButtonText</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = new MudDialogInstance();
+    [Parameter] public string Title { get; set; } = "Xác nhận xoá?";
+    [Parameter] public string ContentText { get; set; } = string.Empty;
+    [Parameter] public string ButtonText { get; set; } = "Xoá";
+    [Parameter] public string CancelButtonText { get; set; } = "Hủy";
+    [Parameter] public Color Color { get; set; } = Color.Error;
+}

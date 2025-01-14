@@ -1,0 +1,179 @@
+﻿@page "/doctors"
+@using BloodHub.Client.Services
+@using BloodHub.Shared.Entities
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject DoctorService DoctorService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<PageTitle>Danh sách bác sĩ</PageTitle>
+
+<MudPaper Class="m-2" Elevation="3" >
+    <!-- Table Section to Display Doctors -->
+    <MudTable Items="doctors" FixedHeader="true" Dense="@dense" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
+              Filter="new Func<Doctor,bool>(FilterFunc)" @bind-SelectedItem="selectedItem" HorizontalScrollbar="true" >
+        <ToolBarContent>
+            <MudText Typo="Typo.h4" Class="mb-2">Danh sách bác sĩ</MudText>
+
+            <MudSpacer />
+
+            <!-- Trường tìm kiếm -->
+            <MudTextField @bind-Value="searchString" Placeholder="Tìm kiếm"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          AdornmentColor="Color.Secondary" IconSize="Size.Medium"
+                          Class="mt-0" Style="margin-right: 8px;" />
+
+            <!-- Nút Thêm mới -->
+            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                       Color="Color.Info" OnClick="@(() => OpenDoctorDialog(null))"
+                       Size="Size.Medium">
+                Thêm mới
+            </MudButton>            
+        </ToolBarContent>
+
+        <ColGroup>
+            <col style="width: 60%; min-width:150px;" />
+            <col style="width: 30%; min-width:80px;" />
+            <col style="width: 10%; min-width:60px;" />
+        </ColGroup>
+
+        <!-- Table Header -->
+        <HeaderContent>
+            <MudTh><MudTableSortLabel SortBy="new Func<Doctor, object>(x => x.DoctorName)">Tên bác sĩ</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:center"><MudTableSortLabel SortBy="new Func<Doctor, object>(x => x.IsHide)">Trạng thái</MudTableSortLabel></MudTh>
+            <MudTh Style="text-align:center">Hành động</MudTh>
+        </HeaderContent>
+
+        <!-- Table Rows -->
+        <RowTemplate>
+            <!-- Doctor Name Column -->
+            <MudTd DataLabel="Tên bác sĩ">@context.DoctorName</MudTd>
+            <!-- Status Column with Conditional Display -->
+            <MudTd Style="text-align:center" DataLabel="Trạng thái">
+                @if (context.IsHide)
+                {
+                    <MudChip T="string" Variant="Variant.Text" Color="Color.Error">Ẩn</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Variant="Variant.Text" Color="Color.Success">Hoạt động</MudChip>
+                }
+            </MudTd>
+            <!-- Action Buttons Column -->
+            <MudTd Style="text-align:center" DataLabel="Hành động">
+                <!-- Edit Button -->
+                <AuthorizeView> 
+                    <Authorized Context="authContext">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenDoctorDialog(context))" 
+                                        Disabled="@(authContext.User.IsInRole("User"))">Sửa</MudIconButton>
+                    </Authorized>
+                </AuthorizeView>
+
+                <!-- Delete Button -->
+                <AuthorizeView Roles="Admin,Manager,User"> 
+                    <Authorized Context="authContext">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteDoctor(context.Id, context.DoctorName))">Xóa</MudIconButton>
+                    </Authorized>
+                </AuthorizeView>
+            </MudTd>
+        </RowTemplate>
+
+        <!-- Pagination -->
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100, int.MaxValue }" RowsPerPageString="Mỗi trang" AllItemsText="Tất cả" />
+        </PagerContent>
+    </MudTable>
+</MudPaper>
+
+@code {
+    // List of doctors to display in the table
+    private List<Doctor> doctors = new List<Doctor>();
+    private Doctor selectedItem = new Doctor(); // Currently selected doctor
+    private HashSet<Doctor> selectedItems = new HashSet<Doctor>(); // Set of selected items (if multi-selection is enabled)
+    private string searchString = ""; // Search string for filtering
+    private bool isLoading = true;
+    private bool dense = true;
+
+    // Fetch the list of doctors when the component initializes
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDoctors();        
+    }
+
+    // Filtering logic for the search functionality
+    private bool FilterFunc(Doctor element) => FilterFunc(element, searchString);
+
+    private bool FilterFunc(Doctor element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true; // No filter applied
+        if (element.DoctorName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true; // Match found
+        return false; // No match
+    }
+
+    // Open the dialog to add or edit a doctor's information
+    private async Task OpenDoctorDialog(Doctor doctor)
+    {
+        var parameters = new DialogParameters();
+        parameters.Add("Doctor", doctor ?? new Doctor()); // Tạo đối tượng mới nếu doctor là null
+
+        string title = (doctor == null) ? "Thêm mới bác sĩ" : "Chỉnh thông tin bác sĩ";
+        var dialog = DialogService.Show<DoctorDialog>(title, parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadDoctors(); // Làm mới danh sách
+        }
+    }
+
+    // Confirm and delete a doctor
+    private async Task ConfirmDeleteDoctor(int doctorId, string doctorName)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Bạn có chắc chắn muốn xóa ''{doctorName}'' ra khỏi danh sách?" }, // Confirmation message
+        };
+
+        var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false)
+        {
+            // Delete the doctor and refresh the list
+            var response = await DoctorService.DeleteDoctor(doctorId);
+            if (response.Success)
+            {
+                await LoadDoctors(); // Làm mới danh sách
+            }
+            else
+            {
+                await DialogService.ShowMessageBox("Lỗi truy cập", response.Message);
+            }
+        }
+    }
+
+    // Phương thức tải lại danh sách bác sĩ (tái sử dụng nhiều nơi)
+    private async Task LoadDoctors()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await DoctorService.GetAllDoctors();
+            if (response.Success && response.Data != null)
+            {
+                doctors = response.Data;
+            }
+        }
+        catch (Exception ex)
+        { 
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}");
+        }
+        finally 
+        {
+            isLoading = false;
+        }
+    }
+}
