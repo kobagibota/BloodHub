@@ -8,27 +8,27 @@ namespace BloodHub.Api.Controllers
     [Authorize(Policy = "ActiveUsersOnly")]
     [Route("api/[controller]")]
     [ApiController]
-    public class DoctorController(IDoctorService doctorService) : ControllerBase
+    public class WardController(IWardService wardService) : ControllerBase
     {
         #region Private Members
 
-        private readonly IDoctorService _doctorService = doctorService;
+        private readonly IWardService _wardService = wardService;
 
         #endregion Private Members
 
         #region Methods
 
         [HttpGet]
-        public async Task<IActionResult> GetAllDoctors()
+        public async Task<IActionResult> GetAllWards()
         {
-            var response = await _doctorService.GetAll();
+            var response = await _wardService.GetAll();
             return Ok(response);
         }
 
         [HttpGet("getbyid/{id}")]
-        public async Task<IActionResult> GetDoctorById(int id)
+        public async Task<IActionResult> GetWardById(int id)
         {
-            var response = await _doctorService.GetById(id);
+            var response = await _wardService.GetById(id);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -38,21 +38,21 @@ namespace BloodHub.Api.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateDoctor([FromBody] DoctorRequest doctor)
+        public async Task<IActionResult> CreateWard([FromBody] WardRequest ward)
         {
-            var response = await _doctorService.Add(doctor);
+            var response = await _wardService.Add(ward);
             if (!response.Success || response.Data == null)
             {
                 return BadRequest(response);
             }
 
-            return CreatedAtAction(nameof(GetDoctorById), new { id = response.Data.Id }, response.Data);
+            return CreatedAtAction(nameof(GetWardById), new { id = response.Data.Id }, response.Data);
         }
 
         [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateDoctor(int id, [FromBody] DoctorRequest request)
+        public async Task<IActionResult> UpdateWard(int id, [FromBody] WardRequest request)
         {
-            var response = await _doctorService.Update(id, request);
+            var response = await _wardService.Update(id, request);
             if (!response.Success)
                 return BadRequest(response);
 
@@ -61,9 +61,9 @@ namespace BloodHub.Api.Controllers
 
         [Authorize(Policy = "ManagerOrAdmin")]
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteDoctor(int id)
+        public async Task<IActionResult> DeleteWard(int id)
         {
-            var response = await _doctorService.Delete(id);
+            var response = await _wardService.Delete(id);
             if (!response.Success)
                 return Forbid();
 

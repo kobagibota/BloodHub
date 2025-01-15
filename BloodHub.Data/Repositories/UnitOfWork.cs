@@ -16,7 +16,11 @@ namespace BloodHub.Data.Repositories
         private IAuthTokenRepository? _authTokenRepository;
         private IActivityLogRepository? _activityLogRepository;
         private IChangeLogRepository? _changeLogRepository;
+
         private IDoctorRepository? _doctorRepository;
+        private INursingRepository? _nursingRepository;
+        private IWardRepository? _wardRepository;
+        private IProductRepository? _productRepository;
 
         #endregion
 
@@ -59,6 +63,21 @@ namespace BloodHub.Data.Repositories
         public IDoctorRepository DoctorRepository
         {
             get { return _doctorRepository ??= new DoctorRepository(_dbContext); }
+        }
+
+        public INursingRepository NursingRepository
+        {
+            get { return _nursingRepository ??= new NursingRepository(_dbContext); }
+        }
+
+        public IWardRepository WardRepository
+        {
+            get { return _wardRepository ??= new WardRepository(_dbContext); }
+        }
+
+        public IProductRepository ProductRepository
+        {
+            get { return _productRepository ??= new ProductRepository(_dbContext); }
         }
 
         #endregion

@@ -1,52 +1,66 @@
-﻿@using BloodHub.Client.Services
+﻿@using BloodHub.Client.Components
+@using BloodHub.Client.Pages
+@using BloodHub.Client.Services
 @using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Navigation
 @inject CustomAuthenticationStateProvider CustomAuthStateProvider
+@inject NavigationManager Navigation
 
 <CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(App).Assembly">
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
-                <NotAuthorized>
-                    @if (context?.User.Identity == null || !context.User.Identity.IsAuthenticated)
-                    {
-                        Navigation.NavigateTo("/login", true);
-                    }
-                    else
-                    {
-                        <p role="alert">Bạn không có quyền truy cập vào trang này.</p>
-                    }
-                </NotAuthorized>
-            </AuthorizeRouteView>
-            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-        </Found>
-        <NotFound>
-            <LayoutView Layout="@typeof(LoginLayout)">
-                <p role="alert">Không tìm thấy trang.</p>
-            </LayoutView>
-        </NotFound>
-    </Router>
+    @if (isCheckingAuth)
+    {
+        <!-- Hiển thị màn hình chờ trong khi kiểm tra xác thực -->
+        <MudContainer Class="auth-check-container">
+            <MudPaper Elevation="2" Class="auth-check-paper">
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Medium" />
+                <MudText Typo="Typo.h6" Align="Align.Center" Class="mt-3">
+                    Đang kiểm tra trạng thái đăng nhập...
+                </MudText>
+            </MudPaper>
+        </MudContainer>
+    }
+    else if (!isAuthenticated && !Navigation.Uri.EndsWith("/login"))
+    {
+        <!-- Điều hướng về trang login -->
+        <RedirectToLogin />
+    }
+    else
+    {
+        <!-- Hiển thị ứng dụng -->        
+        <Router AppAssembly="@typeof(App).Assembly">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                    <NotAuthorized>
+                        @if (!isAuthenticated)
+                        {
+                            <RedirectToLogin />
+                        }
+                        else
+                        {
+                            <NotAuthorizedView />
+                        }
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+            </Found>
+            <NotFound>
+                <LayoutView Layout="@typeof(LoginLayout)">
+                    <h3 role="alert">Không tìm thấy trang.</h3>
+                </LayoutView>
+            </NotFound>
+        </Router>
+    }
 </CascadingAuthenticationState>
 
 @code {
-    private AuthenticationState? context;
+    private bool isAuthenticated;
+    private bool isCheckingAuth = true;
 
     protected override async Task OnInitializedAsync()
     {
-        context = await CustomAuthStateProvider.GetAuthenticationStateAsync();
+        // Kiểm tra trạng thái xác thực
+        var authState = await CustomAuthStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+
+        isCheckingAuth = false; // Hoàn tất kiểm tra
     }
 }
-
-
-@* <Router AppAssembly="@typeof(App).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
-    </Found>
-    <NotFound>
-        <PageTitle>Not found</PageTitle>
-        <LayoutView Layout="@typeof(MainLayout)">
-            <p role="alert">Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router> *@

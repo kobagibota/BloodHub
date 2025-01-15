@@ -10,6 +10,9 @@
         IChangeLogRepository ChangeLogRepository { get; }
 
         IDoctorRepository DoctorRepository { get; }
+        INursingRepository NursingRepository { get; }
+        IWardRepository WardRepository { get; }
+        IProductRepository ProductRepository { get; }
 
         void Save();
         Task SaveAsync();

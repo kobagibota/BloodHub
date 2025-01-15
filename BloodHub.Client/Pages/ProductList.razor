@@ -1,4 +1,4 @@
-﻿@page "/doctors"
+﻿@page "/products"
 @attribute [Authorize]
 
 @using BloodHub.Client.Components
@@ -7,19 +7,19 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 
-@inject DoctorService DoctorService
+@inject ProductService ProductService
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
 
-<PageTitle>Danh sách bác sĩ</PageTitle>
+<PageTitle>Danh sách sản phẩm</PageTitle>
 
 <RoleAuthorizeView Roles="Manager,Admin,User"> 
     <MudPaper Class="m-2" Elevation="3" >
-        <!-- Table Section to Display Doctors -->
-        <MudTable Items="doctors" FixedHeader="true" Dense="@dense" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
-                  Filter="new Func<Doctor,bool>(FilterFunc)" @bind-SelectedItem="selectedItem" HorizontalScrollbar="true" >
+        <!-- Table Section to Display Products -->
+        <MudTable Items="products" FixedHeader="true" Dense="@dense" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
+                  Filter="new Func<Product,bool>(FilterFunc)" @bind-SelectedItem="selectedItem" HorizontalScrollbar="true" >
             <ToolBarContent>
-                <MudText Typo="Typo.h4" Class="mb-2">Danh sách bác sĩ</MudText>
+                <MudText Typo="Typo.h4" Class="mb-2">Danh sách sản phẩm</MudText>
 
                 <MudSpacer />
 
@@ -31,7 +31,7 @@
 
                 <!-- Nút Thêm mới -->
                 <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                           Color="Color.Info" OnClick="@(() => OpenDoctorDialog(null))"
+                           Color="Color.Info" OnClick="@(() => OpenProductDialog(null))"
                            Size="Size.Medium">
                     Thêm mới
                 </MudButton>            
@@ -39,38 +39,30 @@
 
             <ColGroup>
                 <col style="width: 70%; min-width:150px;" />
-                <col style="width: 20%; min-width:60px;" />
-                <col style="width: 10%; min-width:30px;" />
+                <col style="width: 20%; min-width:50px;" />
+                <col style="width: 10%; min-width:20px;" />
             </ColGroup>
 
             <!-- Table Header -->
             <HeaderContent>
-                <MudTh><MudTableSortLabel SortBy="new Func<Doctor, object>(x => x.DoctorName)">Tên bác sĩ</MudTableSortLabel></MudTh>
-                <MudTh Style="text-align:center"><MudTableSortLabel SortBy="new Func<Doctor, object>(x => x.IsHide)">Trạng thái</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Product, object>(x => x.ProductName)">Tên sản phẩm</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Product, object>(x => x.Unit)">Đơn vị tính</MudTableSortLabel></MudTh>
+
                 <MudTh Style="text-align:center">Hành động</MudTh>
             </HeaderContent>
 
             <!-- Table Rows -->
             <RowTemplate>
-                <!-- Doctor Name Column -->
-                <MudTd DataLabel="Tên bác sĩ">@context.DoctorName</MudTd>
-                <!-- Status Column with Conditional Display -->
-                <MudTd Style="text-align:center" DataLabel="Trạng thái">
-                    @if (context.IsHide)
-                    {
-                        <MudChip T="string" Variant="Variant.Text" Color="Color.Error">Ẩn</MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Variant="Variant.Text" Color="Color.Success">Hoạt động</MudChip>
-                    }
-                </MudTd>
+                <!-- Product Name Column -->
+                <MudTd DataLabel="Tên sản phẩm">@context.ProductName</MudTd>
+                <MudTd DataLabel="Đơn vị tính">@context.Unit</MudTd>
+
                 <!-- Action Buttons Column -->
                 <MudTd Style="text-align:center" DataLabel="Hành động">
                     <!-- Edit Button -->
                     <AuthorizeView> 
                         <Authorized Context="authContext">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenDoctorDialog(context))" 
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenProductDialog(context))" 
                                             Disabled="@(authContext.User.IsInRole("User"))">Sửa</MudIconButton>
                         </Authorized>
                     </AuthorizeView>
@@ -78,7 +70,7 @@
                     <!-- Delete Button -->
                     <AuthorizeView Roles="Admin,Manager"> 
                         <Authorized Context="authContext">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteDoctor(context.Id, context.DoctorName))">Xóa</MudIconButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteProduct(context.Id, context))">Xóa</MudIconButton>
                         </Authorized>
                     </AuthorizeView>
                 </MudTd>
@@ -93,54 +85,54 @@
 </RoleAuthorizeView>
 
 @code {
-    // List of doctors to display in the table
-    private List<Doctor> doctors = new List<Doctor>();
-    private Doctor selectedItem = new Doctor(); // Currently selected doctor
-    private HashSet<Doctor> selectedItems = new HashSet<Doctor>(); // Set of selected items (if multi-selection is enabled)
+    // List of products to display in the table
+    private List<Product> products = new List<Product>();
+    private Product selectedItem = new Product(); // Currently selected product
+    private HashSet<Product> selectedItems = new HashSet<Product>(); // Set of selected items (if multi-selection is enabled)
     private string searchString = ""; // Search string for filtering
     private bool isLoading = true;
     private bool dense = true;
 
-    // Fetch the list of doctors when the component initializes
+    // Fetch the list of products when the component initializes
     protected override async Task OnInitializedAsync()
     {
-        await LoadDoctors();        
+        await LoadProducts();        
     }
 
     // Filtering logic for the search functionality
-    private bool FilterFunc(Doctor element) => FilterFunc(element, searchString);
+    private bool FilterFunc(Product element) => FilterFunc(element, searchString);
 
-    private bool FilterFunc(Doctor element, string searchString)
+    private bool FilterFunc(Product element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString))
             return true; // No filter applied
-        if (element.DoctorName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (element.ProductName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true; // Match found
         return false; // No match
     }
 
-    // Open the dialog to add or edit a doctor's information
-    private async Task OpenDoctorDialog(Doctor doctor)
+    // Open the dialog to add or edit a product's information
+    private async Task OpenProductDialog(Product product)
     {
         var parameters = new DialogParameters();
-        parameters.Add("Doctor", doctor ?? new Doctor()); // Tạo đối tượng mới nếu doctor là null
+        parameters.Add("Product", product ?? new Product()); // Tạo đối tượng mới nếu product là null
 
-        string title = (doctor == null) ? "Thêm mới bác sĩ" : "Chỉnh thông tin bác sĩ";
-        var dialog = DialogService.Show<DoctorDialog>(title, parameters);
+        string title = (product == null) ? "Thêm mới sản phẩm" : "Chỉnh thông tin sản phẩm";
+        var dialog = DialogService.Show<ProductDialog>(title, parameters);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
         {
-            await LoadDoctors(); // Làm mới danh sách
+            await LoadProducts(); // Làm mới danh sách
         }
     }
 
-    // Confirm and delete a doctor
-    private async Task ConfirmDeleteDoctor(int doctorId, string doctorName)
+    // Confirm and delete a product
+    private async Task ConfirmDeleteProduct(int productId, Product productName)
     {
         var parameters = new DialogParameters
         {
-            { "ContentText", $"Bạn có chắc chắn muốn xóa ''{doctorName}'' ra khỏi danh sách không?" }, // Confirmation message
+            { "ContentText", $"Bạn có chắc chắn muốn xóa ''{productName.ProductName}'' với đơn vị tính ''{productName.Unit}'' ra khỏi danh sách không?" }, // Confirmation message
         };
 
         var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
@@ -148,11 +140,11 @@
 
         if (result?.Canceled == false)
         {
-            // Delete the doctor and refresh the list
-            var response = await DoctorService.DeleteDoctor(doctorId);
+            // Delete the product and refresh the list
+            var response = await ProductService.DeleteProduct(productId);
             if (response.Success)
             {
-                await LoadDoctors(); // Làm mới danh sách
+                await LoadProducts(); // Làm mới danh sách
             }
             else
             {
@@ -161,16 +153,16 @@
         }
     }
 
-    // Phương thức tải lại danh sách bác sĩ (tái sử dụng nhiều nơi)
-    private async Task LoadDoctors()
+    // Phương thức tải lại danh sách sản phẩm (tái sử dụng nhiều nơi)
+    private async Task LoadProducts()
     {
         try
         {
             isLoading = true;
-            var response = await DoctorService.GetAllDoctors();
+            var response = await ProductService.GetAllProducts();
             if (response.Success && response.Data != null)
             {
-                doctors = response.Data;
+                products = response.Data;
             }
             else
             {
@@ -180,7 +172,7 @@
         }
         catch (Exception ex)
         { 
-            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}");
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi khi tải danh sách sản phẩm: {ex.Message}");
         }
         finally 
         {

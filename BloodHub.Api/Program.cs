@@ -72,7 +72,6 @@ builder.Services.AddCors(option =>
     .AllowAnyMethod().AllowAnyHeader().AllowCredentials());
 });
 
-
 // Add application services.
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthTokenService, AuthTokenService>();
@@ -83,6 +82,9 @@ builder.Services.AddScoped<IChangeLogService, ChangeLogService>();      // Log
 builder.Services.AddScoped<RequestInfoProvider>();                      // RequestInfoProvider get UserId, IPAddress, UserAgent from Token
 
 builder.Services.AddScoped<IDoctorService, DoctorService>();
+builder.Services.AddScoped<INursingService, NursingService>();
+builder.Services.AddScoped<IWardService, WardService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 
 var app = builder.Build();

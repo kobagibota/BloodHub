@@ -1,0 +1,124 @@
+﻿@using BloodHub.Client.Services
+@using BloodHub.Shared.Entities
+
+@inject WardService WardService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="@Ward" OnValidSubmit="OnValidSubmit" Spacing="3">
+            <MudTextField @bind-Value="Ward.WardName" Label="Tên khoa phòng" Required="true" FullWidth="true" @ref="wardNameInput" />
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Color="Color.Secondary">Hủy</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="isLoading" OnClick="SubmitForm">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            }
+            else
+            {
+                <MudText>@(Ward.Id == 0 ? "Thêm mới" : "Cập nhật")</MudText>
+            }
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Ward Ward { get; set; } = new Ward();
+
+    private Ward originalWard = new Ward();
+    private MudForm form = new MudForm();
+    private bool isLoading = false;
+    private MudTextField<string> wardNameInput = new MudTextField<string>();
+
+    protected override void OnInitialized()
+    {
+        // Sao chép sâu đối tượng ban đầu
+        if (Ward != null)
+        {
+            originalWard = new Ward
+            {
+                Id = Ward.Id,
+                WardName = Ward.WardName
+            };
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FocusWardNameInput(); 
+        } 
+    }
+
+    private async Task SubmitForm()
+    {
+        if (form != null)
+        {
+            await form.Validate();
+            if (form.IsValid)
+            {
+                await OnValidSubmit();
+            }
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true;
+
+        try
+        {
+            var result = Ward.Id == 0
+                ? await WardService.CreateWard(Ward)
+                : await WardService.UpdateWard(Ward.Id, Ward);
+
+            if (!result.Success)
+            {
+                await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
+                await FocusWardNameInput();
+                isLoading = false;
+                return;
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }        
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi {ex.Message}.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CloseDialog()
+    {
+        // Khôi phục thông tin khoa phòng ban đầu khi nhấn "Hủy"
+        if (Ward != null)
+        {
+            Ward.Id = originalWard.Id;
+            Ward.WardName = originalWard.WardName;
+        }
+
+        MudDialog.Cancel();
+    }
+
+    private async Task FocusWardNameInput()
+    {
+        await Task.Delay(200); // Đợi một chút để đảm bảo rằng thông báo lỗi đã đóng 
+        if (wardNameInput != null) 
+        { 
+            await wardNameInput.FocusAsync(); 
+        }
+    }
+}

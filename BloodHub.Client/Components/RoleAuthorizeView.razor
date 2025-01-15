@@ -1,0 +1,15 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView Roles="@Roles">
+    <Authorized>
+        @ChildContent
+    </Authorized>
+    <NotAuthorized>
+        <NotAuthorizedView />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter] public string Roles { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

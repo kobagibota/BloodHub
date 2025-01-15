@@ -1,0 +1,21 @@
+﻿@page "/not-authorized"
+@layout LoginLayout
+
+@using MudBlazor
+@inject NavigationManager Navigation
+
+<div class="d-flex align-items-center justify-content-center mt-5"> 
+    <MudPaper Class="text-center p-4" Elevation="3"> 
+        <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Large" Color="Color.Warning" /> 
+        <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Error" Class="mt-2">Truy cập bị từ chối</MudText> 
+        <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mt-1"> Bạn không có quyền truy cập vào trang này. Nếu bạn nghĩ đây là nhầm lẫn, vui lòng liên hệ với quản trị viên. </MudText> 
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@GoBack" Class="mt-3"> Quay lại trang chủ </MudButton>
+    </MudPaper>
+</div>
+
+@code {
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

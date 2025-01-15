@@ -1,4 +1,4 @@
-﻿@page "/doctors"
+﻿@page "/wards"
 @attribute [Authorize]
 
 @using BloodHub.Client.Components
@@ -7,19 +7,19 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 
-@inject DoctorService DoctorService
+@inject WardService WardService
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
 
-<PageTitle>Danh sách bác sĩ</PageTitle>
+<PageTitle>Danh sách khoa phòng</PageTitle>
 
 <RoleAuthorizeView Roles="Manager,Admin,User"> 
     <MudPaper Class="m-2" Elevation="3" >
-        <!-- Table Section to Display Doctors -->
-        <MudTable Items="doctors" FixedHeader="true" Dense="@dense" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
-                  Filter="new Func<Doctor,bool>(FilterFunc)" @bind-SelectedItem="selectedItem" HorizontalScrollbar="true" >
+        <!-- Table Section to Display Wards -->
+        <MudTable Items="wards" FixedHeader="true" Dense="@dense" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
+                  Filter="new Func<Ward,bool>(FilterFunc)" @bind-SelectedItem="selectedItem" HorizontalScrollbar="true" >
             <ToolBarContent>
-                <MudText Typo="Typo.h4" Class="mb-2">Danh sách bác sĩ</MudText>
+                <MudText Typo="Typo.h4" Class="mb-2">Danh sách khoa phòng</MudText>
 
                 <MudSpacer />
 
@@ -31,46 +31,35 @@
 
                 <!-- Nút Thêm mới -->
                 <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                           Color="Color.Info" OnClick="@(() => OpenDoctorDialog(null))"
+                           Color="Color.Info" OnClick="@(() => OpenWardDialog(null))"
                            Size="Size.Medium">
                     Thêm mới
                 </MudButton>            
             </ToolBarContent>
 
             <ColGroup>
-                <col style="width: 70%; min-width:150px;" />
-                <col style="width: 20%; min-width:60px;" />
-                <col style="width: 10%; min-width:30px;" />
+                <col style="width: 80%; min-width:150px;" />
+                <col style="width: 20%; min-width:30px;" />
             </ColGroup>
 
             <!-- Table Header -->
             <HeaderContent>
-                <MudTh><MudTableSortLabel SortBy="new Func<Doctor, object>(x => x.DoctorName)">Tên bác sĩ</MudTableSortLabel></MudTh>
-                <MudTh Style="text-align:center"><MudTableSortLabel SortBy="new Func<Doctor, object>(x => x.IsHide)">Trạng thái</MudTableSortLabel></MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Ward, object>(x => x.WardName)">Tên khoa phòng</MudTableSortLabel></MudTh>
+
                 <MudTh Style="text-align:center">Hành động</MudTh>
             </HeaderContent>
 
             <!-- Table Rows -->
             <RowTemplate>
-                <!-- Doctor Name Column -->
-                <MudTd DataLabel="Tên bác sĩ">@context.DoctorName</MudTd>
-                <!-- Status Column with Conditional Display -->
-                <MudTd Style="text-align:center" DataLabel="Trạng thái">
-                    @if (context.IsHide)
-                    {
-                        <MudChip T="string" Variant="Variant.Text" Color="Color.Error">Ẩn</MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Variant="Variant.Text" Color="Color.Success">Hoạt động</MudChip>
-                    }
-                </MudTd>
+                <!-- Ward Name Column -->
+                <MudTd DataLabel="Tên khoa phòng">@context.WardName</MudTd>
+
                 <!-- Action Buttons Column -->
                 <MudTd Style="text-align:center" DataLabel="Hành động">
                     <!-- Edit Button -->
                     <AuthorizeView> 
                         <Authorized Context="authContext">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenDoctorDialog(context))" 
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenWardDialog(context))" 
                                             Disabled="@(authContext.User.IsInRole("User"))">Sửa</MudIconButton>
                         </Authorized>
                     </AuthorizeView>
@@ -78,7 +67,7 @@
                     <!-- Delete Button -->
                     <AuthorizeView Roles="Admin,Manager"> 
                         <Authorized Context="authContext">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteDoctor(context.Id, context.DoctorName))">Xóa</MudIconButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteWard(context.Id, context.WardName))">Xóa</MudIconButton>
                         </Authorized>
                     </AuthorizeView>
                 </MudTd>
@@ -93,54 +82,54 @@
 </RoleAuthorizeView>
 
 @code {
-    // List of doctors to display in the table
-    private List<Doctor> doctors = new List<Doctor>();
-    private Doctor selectedItem = new Doctor(); // Currently selected doctor
-    private HashSet<Doctor> selectedItems = new HashSet<Doctor>(); // Set of selected items (if multi-selection is enabled)
+    // List of wards to display in the table
+    private List<Ward> wards = new List<Ward>();
+    private Ward selectedItem = new Ward(); // Currently selected ward
+    private HashSet<Ward> selectedItems = new HashSet<Ward>(); // Set of selected items (if multi-selection is enabled)
     private string searchString = ""; // Search string for filtering
     private bool isLoading = true;
     private bool dense = true;
 
-    // Fetch the list of doctors when the component initializes
+    // Fetch the list of wards when the component initializes
     protected override async Task OnInitializedAsync()
     {
-        await LoadDoctors();        
+        await LoadWards();        
     }
 
     // Filtering logic for the search functionality
-    private bool FilterFunc(Doctor element) => FilterFunc(element, searchString);
+    private bool FilterFunc(Ward element) => FilterFunc(element, searchString);
 
-    private bool FilterFunc(Doctor element, string searchString)
+    private bool FilterFunc(Ward element, string searchString)
     {
         if (string.IsNullOrWhiteSpace(searchString))
             return true; // No filter applied
-        if (element.DoctorName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (element.WardName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true; // Match found
         return false; // No match
     }
 
-    // Open the dialog to add or edit a doctor's information
-    private async Task OpenDoctorDialog(Doctor doctor)
+    // Open the dialog to add or edit a ward's information
+    private async Task OpenWardDialog(Ward ward)
     {
         var parameters = new DialogParameters();
-        parameters.Add("Doctor", doctor ?? new Doctor()); // Tạo đối tượng mới nếu doctor là null
+        parameters.Add("Ward", ward ?? new Ward()); // Tạo đối tượng mới nếu ward là null
 
-        string title = (doctor == null) ? "Thêm mới bác sĩ" : "Chỉnh thông tin bác sĩ";
-        var dialog = DialogService.Show<DoctorDialog>(title, parameters);
+        string title = (ward == null) ? "Thêm mới khoa phòng" : "Chỉnh thông tin khoa phòng";
+        var dialog = DialogService.Show<WardDialog>(title, parameters);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
         {
-            await LoadDoctors(); // Làm mới danh sách
+            await LoadWards(); // Làm mới danh sách
         }
     }
 
-    // Confirm and delete a doctor
-    private async Task ConfirmDeleteDoctor(int doctorId, string doctorName)
+    // Confirm and delete a ward
+    private async Task ConfirmDeleteWard(int wardId, string wardName)
     {
         var parameters = new DialogParameters
         {
-            { "ContentText", $"Bạn có chắc chắn muốn xóa ''{doctorName}'' ra khỏi danh sách không?" }, // Confirmation message
+            { "ContentText", $"Bạn có chắc chắn muốn xóa ''{wardName}'' ra khỏi danh sách không?" }, // Confirmation message
         };
 
         var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
@@ -148,11 +137,11 @@
 
         if (result?.Canceled == false)
         {
-            // Delete the doctor and refresh the list
-            var response = await DoctorService.DeleteDoctor(doctorId);
+            // Delete the ward and refresh the list
+            var response = await WardService.DeleteWard(wardId);
             if (response.Success)
             {
-                await LoadDoctors(); // Làm mới danh sách
+                await LoadWards(); // Làm mới danh sách
             }
             else
             {
@@ -161,16 +150,16 @@
         }
     }
 
-    // Phương thức tải lại danh sách bác sĩ (tái sử dụng nhiều nơi)
-    private async Task LoadDoctors()
+    // Phương thức tải lại danh sách khoa phòng (tái sử dụng nhiều nơi)
+    private async Task LoadWards()
     {
         try
         {
             isLoading = true;
-            var response = await DoctorService.GetAllDoctors();
+            var response = await WardService.GetAllWards();
             if (response.Success && response.Data != null)
             {
-                doctors = response.Data;
+                wards = response.Data;
             }
             else
             {
@@ -180,7 +169,7 @@
         }
         catch (Exception ex)
         { 
-            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi khi tải danh sách bác sĩ: {ex.Message}");
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi khi tải danh sách khoa phòng: {ex.Message}");
         }
         finally 
         {

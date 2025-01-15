@@ -25,7 +25,7 @@ namespace BloodHub.Api.Controllers
             var response = await _authService.LoginAsync(request);
             if (!response.Success)
             {
-                return Unauthorized(response.Message);
+                return BadRequest(response);
             }
 
             return Ok(response); 
@@ -65,7 +65,7 @@ namespace BloodHub.Api.Controllers
         {
             var response = await _authService.RefreshTokenAsync(refreshToken);
             if (!response.Success)
-                return Unauthorized(response);
+                return BadRequest(response);
 
             return Ok(response);
         }

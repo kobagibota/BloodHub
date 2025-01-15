@@ -20,8 +20,4 @@
     <ProjectReference Include="..\BloodHub.Shared\BloodHub.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>

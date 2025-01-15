@@ -1,6 +1,8 @@
 ﻿using Blazored.LocalStorage;
 using BloodHub.Client.Helpers;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
@@ -13,7 +15,7 @@ namespace BloodHub.Client.Services
         private readonly ILocalStorageService _localStorageService;
         private readonly AuthenticationState _anonymous;
 
-        public CustomAuthenticationStateProvider(HttpClient httpClient, ILocalStorageService localStorageService)
+        public CustomAuthenticationStateProvider(HttpClient httpClient, ILocalStorageService localStorageService, NavigationManager navigationManager)
         {
             _httpClient = httpClient;
             _localStorageService = localStorageService;
@@ -23,7 +25,7 @@ namespace BloodHub.Client.Services
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             var token = await _localStorageService.GetItemAsync<string>(AppConstants.AccessTokenKey);
-            if (string.IsNullOrWhiteSpace(token))
+            if (string.IsNullOrWhiteSpace(token) || IsTokenExpired(token))
             {
                 return _anonymous; // Trả về trạng thái không xác thực  
             }
@@ -72,10 +74,9 @@ namespace BloodHub.Client.Services
             return Convert.FromBase64String(base64);
         }
 
-        public string GetUserFullName(ClaimsPrincipal user)
+        public bool IsTokenExpired(string token)
         {
-            var claim = user.FindFirst(ClaimTypes.GivenName);
-            return claim?.Value ?? string.Empty;
+            return new JwtSecurityTokenHandler().ReadToken(token) is not JwtSecurityToken jwtToken || jwtToken.ValidTo < DateTime.UtcNow;
         }
     }
 }

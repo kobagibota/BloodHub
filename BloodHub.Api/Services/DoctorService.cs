@@ -66,21 +66,10 @@ namespace BloodHub.Api.Services
                 response.Data = newDoctor;
                 response.Message = $"Đã thêm thành công!";
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                string errorMessage = "Xảy ra lỗi trong quá trình thêm.";
-
-                if (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlException)
-                {
-                    int errorCode = sqlException.Number;
-                    if (errorCode == 2627 || errorCode == 2601)
-                    {
-                        errorMessage = "Xảy ra lỗi do trùng tên bác sĩ.";
-                    }
-                }
-
                 response.Success = false;
-                response.Message = errorMessage;
+                response.Message = "Xảy ra lỗi trong quá trình thêm.";
             }
 
             return response;

@@ -1,0 +1,128 @@
+﻿@using BloodHub.Client.Services
+@using BloodHub.Shared.Entities
+
+@inject ProductService ProductService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="@Product" OnValidSubmit="OnValidSubmit" Spacing="3">
+            <MudTextField @bind-Value="Product.ProductName" Label="Tên sản phẩm" Required="true" FullWidth="true" @ref="productNameInput" />
+
+            <MudTextField @bind-Value="Product.Unit" Label="Đơn vị tính" Required="true" FullWidth="true" />
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Color="Color.Secondary">Hủy</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="isLoading" OnClick="SubmitForm">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            }
+            else
+            {
+                <MudText>@(Product.Id == 0 ? "Thêm mới" : "Cập nhật")</MudText>
+            }
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Product Product { get; set; } = new Product();
+
+    private Product originalProduct = new Product();
+    private MudForm form = new MudForm();
+    private bool isLoading = false;
+    private MudTextField<string> productNameInput = new MudTextField<string>();
+
+    protected override void OnInitialized()
+    {
+        // Sao chép sâu đối tượng ban đầu
+        if (Product != null)
+        {
+            originalProduct = new Product
+            {
+                Id = Product.Id,
+                ProductName = Product.ProductName,
+                Unit = Product.Unit
+            };
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FocusProductNameInput(); 
+        } 
+    }
+
+    private async Task SubmitForm()
+    {
+        if (form != null)
+        {
+            await form.Validate();
+            if (form.IsValid)
+            {
+                await OnValidSubmit();
+            }
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true;
+
+        try
+        {
+            var result = Product.Id == 0
+                ? await ProductService.CreateProduct(Product)
+                : await ProductService.UpdateProduct(Product.Id, Product);
+
+            if (!result.Success)
+            {
+                await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
+                await FocusProductNameInput();
+                isLoading = false;
+                return;
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }        
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi {ex.Message}.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CloseDialog()
+    {
+        // Khôi phục thông tin sản phẩm ban đầu khi nhấn "Hủy"
+        if (Product != null)
+        {
+            Product.Id = originalProduct.Id;
+            Product.ProductName = originalProduct.ProductName;
+            Product.Unit = originalProduct.Unit;
+        }
+
+        MudDialog.Cancel();
+    }
+
+    private async Task FocusProductNameInput()
+    {
+        await Task.Delay(200); // Đợi một chút để đảm bảo rằng thông báo lỗi đã đóng 
+        if (productNameInput != null) 
+        { 
+            await productNameInput.FocusAsync(); 
+        }
+    }
+}

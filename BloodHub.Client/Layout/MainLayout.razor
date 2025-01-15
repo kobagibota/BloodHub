@@ -33,19 +33,19 @@ CloseOnEscapeKey="true" />
         <!-- Hiển thị lời chào -->
         <MudText Typo="Typo.body1" >Chào @_userName</MudText>
 
-        <MudMenu Icon="@Icons.Material.Filled.MoreVert"
-        AriaLabel="Open user menu">
+        <!-- Toggle Dark Mode -->
+        <MudToggleIconButton @bind-Toggled="ThemeService.IsDarkMode"
+        OnToggledChanged="OnDarkModeToggle"
+        Icon="@Icons.Material.Filled.WbSunny" Color="@Color.Default"
+        ToggledIcon="@Icons.Material.Filled.Brightness2" ToggledColor="@Color.Warning"
+        Class="m-1" />
+
+        <MudMenu Icon="@Icons.Material.Filled.Settings" AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" AriaLabel="Open user menu">
             <ChildContent>
-                <!-- Toggle Dark Mode -->
-                <MudSwitch @bind-Value="ThemeService.IsDarkMode"
-                OnCheckedChanged="OnDarkModeToggle"
-                ThumbIcon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.Done : Icons.Material.Filled.Close)"
-                ThumbIconColor="@(ThemeService.IsDarkMode ? Color.Success : Color.Error)"
-                T="bool" Label="Dark Mode" Class="m-4" />
+                <MudMenuItem OnClick="NavigateToProfile">Hồ sơ của tôi</MudMenuItem>
 
                 <MudDivider Class="my-2" />
 
-                <MudMenuItem OnClick="NavigateToProfile">Hồ sơ của tôi</MudMenuItem>
                 <MudMenuItem OnClick="Logout">Đăng xuất</MudMenuItem>
             </ChildContent>
         </MudMenu> 
@@ -60,6 +60,10 @@ CloseOnEscapeKey="true" />
 
             <MudNavGroup Title="Danh mục" Icon="@Icons.Material.Filled.List" Expanded="true">
                 <MudNavLink Href="/doctors" Icon="@Icons.Material.Filled.Man" IconColor="Color.Success" >Bác sĩ</MudNavLink>
+                <MudNavLink Href="/nursings" Icon="@Icons.Material.Filled.Woman" IconColor="Color.Success">Điều dưỡng</MudNavLink>
+                <MudNavLink Href="/wards" Icon="@Icons.Material.Filled.Room" IconColor="Color.Success">Khoa phòng</MudNavLink>
+                <MudNavLink Href="/products" Icon="@Icons.Material.Filled.Bloodtype" IconColor="Color.Success">Sản phẩm</MudNavLink>
+
             </MudNavGroup>
 
             <MudDivider Class="my-2" />
@@ -86,7 +90,11 @@ CloseOnEscapeKey="true" />
     { 
         ThemeService.OnChange += StateHasChanged;
 
-        _userName = await AuthService.GetCurrentUserAsync();        
+        _userName = await AuthService.GetCurrentUserAsync();
+        // if (_userName == "Khách")
+        // {
+        //     Navigation.NavigateTo("/login");
+        // }
     }
 
     private void NavigateToProfile() 

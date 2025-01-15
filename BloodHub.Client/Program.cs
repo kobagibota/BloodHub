@@ -5,6 +5,7 @@ using Blazored.LocalStorage;
 using BloodHub.Client.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Services;
+using BloodHub.Client.Helpers;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -26,13 +27,19 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
+// Add HttpClientHelper
+builder.Services.AddScoped<HttpClientHelper>();
+
 // Add HttpClient with AutoRefreshTokenHandler
 builder.Services.AddTransient<AutoRefreshTokenHandler>();
 builder.Services.AddHttpClient("AuthorizedClient")
     .AddHttpMessageHandler<AutoRefreshTokenHandler>();
 
-// Add DoctorService
+// Add AppService
 builder.Services.AddScoped<DoctorService>();
+builder.Services.AddScoped<NursingService>();
+builder.Services.AddScoped<WardService>();
+builder.Services.AddScoped<ProductService>();
 
 
 await builder.Build().RunAsync();

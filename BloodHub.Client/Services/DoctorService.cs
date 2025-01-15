@@ -2,37 +2,69 @@
 using BloodHub.Client.Helpers;
 using BloodHub.Shared.Entities;
 using BloodHub.Shared.Respones;
+using System.Net;
+using static BloodHub.Client.Helpers.AppConstants;
 
 namespace BloodHub.Client.Services
 {
-    public class DoctorService(HttpClient httpClient, ILocalStorageService localStorage)
+    /// <summary>
+    /// Khởi tạo dịch vụ với HttpClient và LocalStorage.
+    /// </summary>
+    public class DoctorService(HttpClientHelper httpClient)
     {
-        private readonly HttpClient _httpClient = httpClient;
-        private readonly ILocalStorageService _localStorage = localStorage;
+        #region Private members
 
+        private readonly HttpClientHelper _httpClient = httpClient;
+
+        #endregion
+
+        #region Methods
+
+        /// <summary>
+        /// Lấy danh sách tất cả bác sĩ.
+        /// </summary>
         public async Task<ServiceResponse<List<Doctor>>> GetAllDoctors()
         {
-            return await HttpClientHelper.SendRequest<List<Doctor>>(_httpClient, _localStorage, HttpMethod.Get, "api/doctor");
+            var endpoint = $"{DoctorEndpoints.GetAll}";
+            return await _httpClient.SendRequest<List<Doctor>>(HttpMethod.Get, endpoint);
         }
 
+        /// <summary>
+        /// Lấy thông tin bác sĩ theo ID.
+        /// </summary>
         public async Task<ServiceResponse<Doctor>> GetDoctorById(int id)
         {
-            return await HttpClientHelper.SendRequest<Doctor>(_httpClient, _localStorage, HttpMethod.Get, $"api/doctor/getbyid/{id}");
+            var endpoint = $"{DoctorEndpoints.GetById}/{id}";
+            return await _httpClient.SendRequest<Doctor>(HttpMethod.Get, endpoint);
         }
 
+        /// <summary>
+        /// Tạo mới bác sĩ.
+        /// </summary>
         public async Task<ServiceResponse<Doctor>> CreateDoctor(Doctor doctor)
         {
-            return await HttpClientHelper.SendRequest<Doctor>(_httpClient, _localStorage, HttpMethod.Post, "api/doctor/create", doctor);
+            var endpoint = $"{DoctorEndpoints.Create}";
+            return await _httpClient.SendRequest<Doctor>(HttpMethod.Post, endpoint, doctor);
         }
 
+        /// <summary>
+        /// Cập nhật thông tin bác sĩ.
+        /// </summary>
         public async Task<ServiceResponse<Doctor>> UpdateDoctor(int id, Doctor doctor)
         {
-            return await HttpClientHelper.SendRequest<Doctor>(_httpClient, _localStorage, HttpMethod.Put, $"api/doctor/update/{id}", doctor);
+            var endpoint = $"{DoctorEndpoints.Update}/{id}";
+            return await _httpClient.SendRequest<Doctor>(HttpMethod.Put, endpoint, doctor);
         }
 
+        /// <summary>
+        /// Xóa bác sĩ theo ID.
+        /// </summary>
         public async Task<ServiceResponse<bool>> DeleteDoctor(int id)
         {
-            return await HttpClientHelper.SendRequest<bool>(_httpClient, _localStorage, HttpMethod.Delete, $"api/doctor/delete/{id}");
+            var endpoint = $"{DoctorEndpoints.Delete}/{id}";
+            return await _httpClient.SendRequest<bool>(HttpMethod.Delete, endpoint);
         }
+
+        #endregion
     }
 }

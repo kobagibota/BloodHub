@@ -6,14 +6,54 @@
         public const string AccessTokenKey = "AccessToken";
         public const string RefreshTokenKey = "RefreshToken";
 
-        // Endpoint API
-        public static class ApiEndpoints
+        // Endpoint Auth
+        public static class AuthEndpoints
         {
             public const string Login = "api/auth/login";
             public const string RefreshToken = "api/auth/refresh";
             public const string CurrentUser = "api/auth/me";
             public const string ResetPassword = "api/auth/reset-password";
             public const string ChangePassword = "api/auth/change-password";
+        }
+
+        // Endpoint Doctor
+        public static class DoctorEndpoints
+        {
+            public const string GetAll = "api/doctor";
+            public const string GetById = "api/doctor/getbyid";
+            public const string Create = "api/doctor/create";
+            public const string Update = "api/doctor/update";
+            public const string Delete = "api/doctor/delete";
+        }
+
+        // Endpoint Doctor
+        public static class NursingEndpoints
+        {
+            public const string GetAll = "api/nursing";
+            public const string GetById = "api/nursing/getbyid";
+            public const string Create = "api/nursing/create";
+            public const string Update = "api/nursing/update";
+            public const string Delete = "api/nursing/delete";
+        }
+
+        // Endpoint Ward
+        public static class WardEndpoints
+        {
+            public const string GetAll = "api/ward";
+            public const string GetById = "api/ward/getbyid";
+            public const string Create = "api/ward/create";
+            public const string Update = "api/ward/update";
+            public const string Delete = "api/ward/delete";
+        }
+
+        // Endpoint Ward
+        public static class ProductEndpoints
+        {
+            public const string GetAll = "api/product";
+            public const string GetById = "api/product/getbyid";
+            public const string Create = "api/product/create";
+            public const string Update = "api/product/update";
+            public const string Delete = "api/product/delete";
         }
     }
 }

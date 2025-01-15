@@ -21,12 +21,12 @@ namespace BloodHub.Client.Services
 
     #endregion
 
-    public class AuthService(HttpClient httpClient, ILocalStorageService localStorage,
+    public class AuthService(HttpClientHelper httpClient, ILocalStorageService localStorage,
                              AuthenticationStateProvider authStateProvider) : IAuthService
     {
         #region Private Members  
 
-        private readonly HttpClient _httpClient = httpClient;
+        private readonly HttpClientHelper _httpClient = httpClient;
         private readonly ILocalStorageService _localStorage = localStorage;
         private readonly CustomAuthenticationStateProvider _authStateProvider = (CustomAuthenticationStateProvider)authStateProvider;
 
@@ -38,8 +38,7 @@ namespace BloodHub.Client.Services
         {
             try
             {
-                var response = await HttpClientHelper.SendRequest<TokenResponse>(
-                    _httpClient, _localStorage, HttpMethod.Post, AppConstants.ApiEndpoints.Login, loginDto);
+                var response = await _httpClient.SendRequest<TokenResponse>(HttpMethod.Post, AppConstants.AuthEndpoints.Login, loginDto);
 
                 if (response == null || !response.Success)
                 {
@@ -97,8 +96,7 @@ namespace BloodHub.Client.Services
                     };
                 }
 
-                var response = await HttpClientHelper.SendRequest<TokenResponse>(
-                    _httpClient, _localStorage, HttpMethod.Post, AppConstants.ApiEndpoints.RefreshToken, new { RefreshToken = refreshToken });
+                var response = await _httpClient.SendRequest<TokenResponse>(HttpMethod.Post, AppConstants.AuthEndpoints.RefreshToken, new { RefreshToken = refreshToken });
 
                 if (response == null || !response.Success)
                 {
@@ -128,7 +126,10 @@ namespace BloodHub.Client.Services
         public async Task<string> GetCurrentUserAsync()
         {
             string? accessToken = await _localStorage.GetItemAsync<string>(AppConstants.AccessTokenKey);
-            if (string.IsNullOrEmpty(accessToken)) return "Khách do null";
+            if (string.IsNullOrEmpty(accessToken) || _authStateProvider.IsTokenExpired(accessToken))
+            {                
+                return "Khách";
+            }
 
             var jwtToken = new JwtSecurityTokenHandler().ReadToken(accessToken) as JwtSecurityToken;
             return jwtToken?.Claims.FirstOrDefault(c => c.Type == "full_name")?.Value ?? "Khách";
@@ -136,8 +137,7 @@ namespace BloodHub.Client.Services
 
         public async Task<ServiceResponse<bool>> ChangePasswordAsync(ChangePasswordDto changePasswordDto)
         {
-            return await HttpClientHelper.SendRequest<bool>(
-                _httpClient, _localStorage, HttpMethod.Post, AppConstants.ApiEndpoints.ChangePassword, changePasswordDto);
+            return await _httpClient.SendRequest<bool>(HttpMethod.Post, AppConstants.AuthEndpoints.ChangePassword, changePasswordDto);
         }
 
         private async Task StoreTokensAsync(string accessToken, string refreshToken)

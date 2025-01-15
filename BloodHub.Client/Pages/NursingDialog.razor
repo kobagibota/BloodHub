@@ -1,0 +1,127 @@
+﻿@using BloodHub.Client.Services
+@using BloodHub.Shared.Entities
+
+@inject NursingService NursingService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="@Nursing" OnValidSubmit="OnValidSubmit" Spacing="3">
+            <MudTextField @bind-Value="Nursing.NursingName" Label="Tên điều dưỡng" Required="true" FullWidth="true" @ref="nursingNameInput" />
+            <MudSwitch @bind-Value="Nursing.IsHide" Label="Ẩn" Color="Color.Secondary" />
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Color="Color.Secondary">Hủy</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="isLoading" OnClick="SubmitForm">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            }
+            else
+            {
+                <MudText>@(Nursing.Id == 0 ? "Thêm mới" : "Cập nhật")</MudText>
+            }
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Nursing Nursing { get; set; } = new Nursing();
+
+    private Nursing originalNursing = new Nursing();
+    private MudForm form = new MudForm();
+    private bool isLoading = false;
+    private MudTextField<string> nursingNameInput = new MudTextField<string>();
+
+    protected override void OnInitialized()
+    {
+        // Sao chép sâu đối tượng ban đầu
+        if (Nursing != null)
+        {
+            originalNursing = new Nursing
+            {
+                Id = Nursing.Id,
+                NursingName = Nursing.NursingName,
+                IsHide = Nursing.IsHide
+            };
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FocusNursingNameInput(); 
+        } 
+    }
+
+    private async Task SubmitForm()
+    {
+        if (form != null)
+        {
+            await form.Validate();
+            if (form.IsValid)
+            {
+                await OnValidSubmit();
+            }
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true;
+
+        try
+        {
+            var result = Nursing.Id == 0
+                ? await NursingService.CreateNursing(Nursing)
+                : await NursingService.UpdateNursing(Nursing.Id, Nursing);
+
+            if (!result.Success)
+            {
+                await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
+                await FocusNursingNameInput();
+                isLoading = false;
+                return;
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }        
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi {ex.Message}.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CloseDialog()
+    {
+        // Khôi phục thông tin điều dưỡng ban đầu khi nhấn "Hủy"
+        if (Nursing != null)
+        {
+            Nursing.Id = originalNursing.Id;
+            Nursing.NursingName = originalNursing.NursingName;
+            Nursing.IsHide = originalNursing.IsHide;
+        }
+
+        MudDialog.Cancel();
+    }
+
+    private async Task FocusNursingNameInput()
+    {
+        await Task.Delay(200); // Đợi một chút để đảm bảo rằng thông báo lỗi đã đóng 
+        if (nursingNameInput != null) 
+        { 
+            await nursingNameInput.FocusAsync(); 
+        }
+    }
+}
