@@ -1,5 +1,7 @@
 ﻿namespace BloodHub.Shared.Extentions
 {
+    #region Enums mapping
+
     public static class GenderMapping
     {
         public static readonly Dictionary<Gender, string> EnumToStringMap = new Dictionary<Gender, string> 
@@ -63,4 +65,40 @@
             { "Dương tính", TestResult.Positive },
         };
     }
+
+    #endregion
+
+    #region Color mapping
+
+    public static class BloodGroupColorMapping
+    {
+        public static Dictionary<BloodGroup, string> BloodGroupColors = new Dictionary<BloodGroup, string>
+        {
+            { BloodGroup.A, "#DF2D25" }, // Đỏ
+            { BloodGroup.B, "#45B9EC" }, // Xanh
+            { BloodGroup.AB, "#9B4BA6" }, // Tím
+            { BloodGroup.O, "#F9D423" }  // Vàng
+        };
+
+        public static string GetColor(BloodGroup bloodGroup)
+        {
+            return BloodGroupColors.TryGetValue(bloodGroup, out var color) ? color : "Black";
+        }
+    }
+
+    public static class RhesusColorMapping
+    {
+        public static Dictionary<Rhesus, string> RhesusColors = new Dictionary<Rhesus, string>
+        {
+            { Rhesus.Positive, "#62C99E" }, // Rêu
+            { Rhesus.Negative, "#F79646" }  // Cam
+        };
+
+        public static string GetColor(Rhesus rhesus)
+        {
+            return RhesusColors.TryGetValue(rhesus, out var color) ? color : "Black";
+        }
+    }
+
+    #endregion
 }

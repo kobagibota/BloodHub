@@ -40,6 +40,6 @@ builder.Services.AddScoped<DoctorService>();
 builder.Services.AddScoped<NursingService>();
 builder.Services.AddScoped<WardService>();
 builder.Services.AddScoped<ProductService>();
-
+builder.Services.AddScoped<PatientService>();
 
 await builder.Build().RunAsync();

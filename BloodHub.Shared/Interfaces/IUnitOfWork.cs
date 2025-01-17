@@ -13,6 +13,8 @@
         INursingRepository NursingRepository { get; }
         IWardRepository WardRepository { get; }
         IProductRepository ProductRepository { get; }
+        IPatientRepository PatientRepository { get; }
+
 
         void Save();
         Task SaveAsync();

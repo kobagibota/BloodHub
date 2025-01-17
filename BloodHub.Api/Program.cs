@@ -85,6 +85,8 @@ builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<INursingService, NursingService>();
 builder.Services.AddScoped<IWardService, WardService>();
 builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IPatientService, PatientService>();
+
 
 
 var app = builder.Build();

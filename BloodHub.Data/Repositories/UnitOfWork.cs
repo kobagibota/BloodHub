@@ -21,6 +21,8 @@ namespace BloodHub.Data.Repositories
         private INursingRepository? _nursingRepository;
         private IWardRepository? _wardRepository;
         private IProductRepository? _productRepository;
+        private IPatientRepository? _patientRepository;
+
 
         #endregion
 
@@ -78,6 +80,11 @@ namespace BloodHub.Data.Repositories
         public IProductRepository ProductRepository
         {
             get { return _productRepository ??= new ProductRepository(_dbContext); }
+        }
+
+        public IPatientRepository PatientRepository
+        {
+            get { return _patientRepository ??= new PatientRepository(_dbContext); }
         }
 
         #endregion

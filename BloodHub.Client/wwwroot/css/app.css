@@ -1,4 +1,4 @@
-html, body {
+﻿html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
@@ -101,3 +101,13 @@ a, .btn-link {
 code {
     color: #c02d76;
 }
+
+.sticky-right {
+    position: -webkit-sticky; /* For Safari */
+    position: sticky;
+    right: 0;
+    background-color: #fff; /* Đặt màu nền để phần dính không bị che khuất */
+    z-index: 1; /* Đặt giá trị z-index để phần dính hiển thị trên các phần khác */
+    box-shadow: -2px 0 5px -2px #ccc; /* Thêm bóng để nhấn mạnh phần dính */
+}
+

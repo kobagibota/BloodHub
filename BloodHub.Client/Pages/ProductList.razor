@@ -27,12 +27,12 @@
                 <MudTextField @bind-Value="searchString" Placeholder="Tìm kiếm"
                               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
                               AdornmentColor="Color.Secondary" IconSize="Size.Medium"
-                              Class="mt-0" Style="margin-right: 12px;" />
+                              Class="mt-0" Style="margin-right: 12px;" Disabled="@isLoading" />
 
                 <!-- Nút Thêm mới -->
                 <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
                            Color="Color.Info" OnClick="@(() => OpenProductDialog(null))"
-                           Size="Size.Medium">
+                           Size="Size.Medium" Disabled="@isLoading">
                     Thêm mới
                 </MudButton>            
             </ToolBarContent>
@@ -75,6 +75,14 @@
                     </AuthorizeView>
                 </MudTd>
             </RowTemplate>
+
+            <NoRecordsContent>
+                <MudText>Không có dữ liệu</MudText>
+            </NoRecordsContent>
+
+            <LoadingContent>
+                <MudText>Đang tải dữ liệu...</MudText>
+            </LoadingContent>
 
             <!-- Pagination -->
             <PagerContent>

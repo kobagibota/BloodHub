@@ -1,0 +1,176 @@
+﻿@using BloodHub.Client.Services
+@using BloodHub.Shared.Entities
+@using BloodHub.Shared.Extentions
+
+@inject PatientService PatientService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="@Patient" OnValidSubmit="OnValidSubmit" Spacing="3">
+            <!-- Họ và tên -->
+            <MudTextField @bind-Value="Patient.PatientName" Label="Họ và tên" Required="true" FullWidth="true" @ref="patientNameInput" Style="text-transform: uppercase;" />
+
+            <!-- Ngày sinh -->
+            <MudDatePicker Label="Ngày sinh" T="DateTime" @bind-Date="Patient.DateOfBirth" Required="true" DateFormat="dd/MM/yyyy" Immediate="true" />
+
+            <MudText>Tuổi: @Patient.Age</MudText>
+
+            <!-- Giới tính -->
+            <MudSelect @bind-Value="Patient.Gender" Label="Giới tính" Required="true" FullWidth="true">
+                @foreach (var gender in GenderMapping.EnumToStringMap.Values)
+                {
+                    <MudSelectItem Value="@GenderMapping.StringToEnumMap[gender]">@gender</MudSelectItem>
+                }
+            </MudSelect>
+
+            <!-- Địa chỉ -->
+            <MudTextField @bind-Value="Patient.Address" Label="Địa chỉ" />
+
+            <!-- Nhóm máu -->
+            <MudSelect @bind-Value="Patient.BloodGroup" Label="Nhóm máu" Required="true" FullWidth="true">
+                @foreach (var bloodGroup in Enum.GetValues<BloodGroup>())
+                {
+                    <MudSelectItem Value="@bloodGroup">@bloodGroup</MudSelectItem>
+                }
+            </MudSelect>
+
+            <!-- Nhóm máu hệ Rhesus -->
+            <MudSelect @bind-Value="Patient.Rhesus" Label="Nhóm máu hệ Rhesus" Required="true" FullWidth="true">
+                @foreach (var rhesus in RhesusMapping.EnumToStringMap.Values)
+                {
+                    <MudSelectItem Value="@RhesusMapping.StringToEnumMap[rhesus]">@rhesus</MudSelectItem>
+                }
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Color="Color.Secondary">Hủy</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="isLoading" OnClick="SubmitForm">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            }
+            else
+            {
+                <MudText>@(Patient.Id == 0 ? "Thêm mới" : "Cập nhật")</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public Patient Patient { get; set; } = new Patient();
+
+    private Patient originalPatient = new Patient();
+    private MudForm? form; // Changed to nullable for safer null-checking
+    private bool isLoading = false;
+    private MudTextField<string>? patientNameInput; // Nullable for safer handling
+
+    protected override void OnInitialized()
+    {
+        // Deep copy of Patient to preserve original values
+        if (Patient != null)
+        {
+            originalPatient = new Patient
+                {
+                    Id = Patient.Id,
+                    PatientName = Patient.PatientName,
+                    DateOfBirth = Patient.DateOfBirth,
+                    Gender = Patient.Gender,
+                    BloodGroup = Patient.BloodGroup,
+                    Rhesus = Patient.Rhesus
+                };
+        }
+        else
+        {
+            Patient.DateOfBirth = DateTime.Now.AddYears(-10);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FocusPatientNameInput();
+        }
+    }
+
+    private async Task SubmitForm()
+    {
+        if (form != null)
+        {
+            await form.Validate(); // Validate the form before submission
+            if (form.IsValid)
+            {
+                await OnValidSubmit();
+            }
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true;
+
+        try
+        {
+            var result = Patient.Id == 0
+                ? await PatientService.CreatePatient(Patient)
+                : await PatientService.UpdatePatient(Patient.Id, Patient);
+
+            if (!result.Success)
+            {
+                await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
+                await FocusPatientNameInput();
+                isLoading = false;
+                return;
+            }
+
+            MudDialog.Close(DialogResult.Ok(true)); // Close dialog with success result
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi {ex.Message}.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CloseDialog()
+    {
+        // Restore original Patient values if cancelled
+        if (Patient != null)
+        {
+            Patient.Id = originalPatient.Id;
+            Patient.PatientName = originalPatient.PatientName;
+            Patient.DateOfBirth = originalPatient.DateOfBirth;
+            Patient.Gender = originalPatient.Gender;
+            Patient.BloodGroup = originalPatient.BloodGroup;
+            Patient.Rhesus = originalPatient.Rhesus;
+        }
+
+        MudDialog.Cancel(); // Close dialog without saving
+    }
+
+    private async Task FocusPatientNameInput()
+    {
+        await Task.Delay(200); // Ensure the dialog is fully rendered before focusing
+        if (patientNameInput != null)
+        {
+            await patientNameInput.FocusAsync();
+        }
+    }
+
+    private void OnChanged(DateTime newDOB)
+    {
+        Patient.DateOfBirth = newDOB;
+        StateHasChanged();
+    }
+}

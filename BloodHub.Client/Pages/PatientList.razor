@@ -1,0 +1,206 @@
+﻿@page "/patients"
+@attribute [Authorize]
+
+@using BloodHub.Client.Components
+@using BloodHub.Client.Services
+@using BloodHub.Shared.Entities
+@using BloodHub.Shared.Extentions
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject PatientService PatientService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<PageTitle>Danh sách bệnh nhân</PageTitle>
+
+<RoleAuthorizeView Roles="Manager,Admin,User"> 
+    <MudPaper Class="m-2" Elevation="3">
+        <!-- Table Section to Display Patients -->
+        <MudTable Items="patients" FixedHeader="true" Dense="true" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
+                  Filter="new Func<Patient,bool>(FilterFunc)" @bind-SelectedItem="selectedItem" HorizontalScrollbar="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h4" Class="mb-2">Danh sách bệnh nhân</MudText>
+
+                <MudSpacer />
+
+                <!-- Search Field -->
+                <MudTextField @bind-Value="searchString" Placeholder="Tìm kiếm"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              AdornmentColor="Color.Secondary" IconSize="Size.Medium"
+                              Class="mt-0" Style="margin-right: 12px;" Disabled="@isLoading" />
+
+                <!-- Add New Button -->
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                           Color="Color.Info" OnClick="@(() => OpenPatientDialog(null))"
+                           Size="Size.Medium" Disabled="@isLoading">
+                    Thêm mới
+                </MudButton>            
+            </ToolBarContent>
+
+            <ColGroup>
+                <col style="width: 30%; min-width:100px;" />
+                <col style="width: 12%; min-width:80px;" />
+                <col style="width: 10%; min-width:60px;" />
+                <col style="width: 8%; min-width:60px;" />
+                <col style="width: auto; min-width:100px;" />
+                <col style="width: 10%; min-width:60px;" />
+                <col style="width: 10%; min-width:60px;" />
+            </ColGroup>
+
+            <!-- Table Header -->
+            <HeaderContent>
+                <MudTh><MudTableSortLabel SortBy="new Func<Patient, object>(x => x.PatientName)">Họ và tên</MudTableSortLabel></MudTh>
+                <MudTh Style="text-align:center">Ngày sinh</MudTh>
+                <MudTh>Tuổi</MudTh>
+                <MudTh Style="text-align:center">Giới tính</MudTh>
+                <MudTh>Địa chỉ</MudTh>
+                <MudTh Style="text-align:center">Nhóm máu</MudTh>
+                <MudTh Style="text-align:center" Class="sticky-right">Hành động</MudTh>
+            </HeaderContent>
+
+            <!-- Table Rows -->
+            <RowTemplate>
+                <MudTd DataLabel="Họ và tên" Style="text-transform: uppercase;">@context.PatientName</MudTd>
+                <MudTd DataLabel="Ngày sinh" Style="text-align:center">
+                    @(context.DateOfBirth.HasValue ? context.DateOfBirth.Value.ToString("dd/MM/yyyy") : "N/A")
+                </MudTd>
+                <MudTd DataLabel="Tuổi">@context.Age</MudTd>
+                <MudTd DataLabel="Giới tính" Style="text-align:center">
+                    <MudChip T="string" Color="@((context.Gender == Gender.Male) ? Color.Success : Color.Warning)" Variant="Variant.Text">
+                        @GenderMapping.EnumToStringMap[context.Gender]
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Địa chỉ">@context.Address</MudTd>
+                <MudTd DataLabel="Nhóm máu" Style="text-align:center">                    
+                    <span style="background-color:@context.BloodGroupColor; color:white; padding: 5px 10px; border-radius: 16px; display: inline-block;">
+                        @context.BloodGroup 
+                    </span> 
+                    <span style="background-color:@context.RhesusColor; color:white; padding: 5px 10px; border-radius: 16px; display: inline-block;">
+                        @(context.Rhesus == Rhesus.Positive ? "Rh(+)" : "Rh(-)")
+                    </span>
+                </MudTd>
+
+                <!-- Action Buttons Column -->
+                <MudTd Style="text-align:center" DataLabel="Hành động" Class="sticky-right">
+                    <!-- Edit Button -->
+                    <AuthorizeView> 
+                        <Authorized Context="authContext">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenPatientDialog(context))" 
+                                            Disabled="@(authContext.User.IsInRole("User"))">Sửa</MudIconButton>
+                        </Authorized>
+                    </AuthorizeView>
+
+                    <!-- Delete Button -->
+                    <AuthorizeView Roles="Admin,Manager"> 
+                        <Authorized Context="authContext">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeletePatient(context.Id, context))">Xóa</MudIconButton>
+                        </Authorized>
+                    </AuthorizeView>
+                </MudTd>
+            </RowTemplate>
+
+            <NoRecordsContent>
+                <MudText>Không có dữ liệu</MudText>
+            </NoRecordsContent>
+
+            <LoadingContent>
+                <MudText>Đang tải dữ liệu...</MudText>
+            </LoadingContent>
+
+            <!-- Pagination -->
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100, int.MaxValue }" RowsPerPageString="Mỗi trang" AllItemsText="Tất cả" />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</RoleAuthorizeView>
+
+@code {
+    private List<Patient> patients = new List<Patient>();
+    private Patient selectedItem = new Patient();
+    private string searchString = ""; 
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPatients();
+    }
+
+    private bool FilterFunc(Patient element) => FilterFunc(element, searchString);
+
+    private bool FilterFunc(Patient element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.PatientName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private async Task OpenPatientDialog(Patient patient)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Patient", patient ?? new Patient() }
+        };
+
+        string title = (patient == null) ? "Thêm mới bệnh nhân" : "Chỉnh sửa thông tin bệnh nhân";
+        var dialog = DialogService.Show<PatientDialog>(title, parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadPatients();
+        }
+    }
+
+    private async Task ConfirmDeletePatient(int patientId, Patient patient)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Bạn có chắc chắn muốn xóa bệnh nhân \"{patient.PatientName}\" không?" },
+        };
+
+        var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false)
+        {
+            var response = await PatientService.DeletePatient(patientId);
+            if (response.Success)
+            {
+                await LoadPatients();
+            }
+            else
+            {
+                await DialogService.ShowMessageBox("Lỗi", response.Message);
+            }
+        }
+    }
+
+    private async Task LoadPatients()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await PatientService.GetAllPatients();
+            if (response.Success && response.Data != null)
+            {
+                patients = response.Data;
+            }
+            else
+            {
+                await DialogService.ShowMessageBox("Lỗi", response.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi khi tải danh sách bệnh nhân: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

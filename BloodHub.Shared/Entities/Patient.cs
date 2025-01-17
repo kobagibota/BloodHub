@@ -11,26 +11,33 @@ namespace BloodHub.Shared.Entities
         [Required, MaxLength(200)]
         public string PatientName { get; set; } = string.Empty;
 
-        public DateTime DateOfBirth { get; set; }
+        private DateTime? dateOfBirth;
+        public DateTime? DateOfBirth
+        {
+            get => dateOfBirth;
+            set => dateOfBirth = value;
+        }
 
         public string Age
         {
             get
             {
+                if (!DateOfBirth.HasValue) return string.Empty;
+
                 var today = DateTime.Today;
-                var ageInDays = (today - DateOfBirth).Days;
+                var ageInDays = (today - DateOfBirth.Value).Days;
                 if (ageInDays < 30)
                 {
                     return $"{ageInDays} ngày";
                 }
 
-                var ageInMonths = ageInDays / 30;       // Giả sử mỗi tháng có 30 ngày
+                var ageInMonths = ageInDays / 30;
                 if (ageInMonths < 72)
                 {
                     return $"{ageInMonths} tháng";
                 }
 
-                var ageInYears = today.Year - DateOfBirth.Year;
+                var ageInYears = today.Year - DateOfBirth.Value.Year;
                 if (DateOfBirth > today.AddYears(-ageInYears))
                 {
                     ageInYears--;
@@ -47,6 +54,19 @@ namespace BloodHub.Shared.Entities
         public BloodGroup BloodGroup { get; set; }
 
         public Rhesus Rhesus { get; set; }
+
+        // Thuộc tính chỉ để đọc kết hợp BloodGroup và Rhesus
+        public string BloodGroupDescription 
+        { 
+            get 
+            { 
+                string rhesusSymbol = Rhesus == Rhesus.Positive ? "Rh(+)" : "Rh(-)"; 
+                return $"{BloodGroup}, {rhesusSymbol}"; 
+            } 
+        }
+
+        public string BloodGroupColor => BloodGroupColorMapping.GetColor(BloodGroup); 
+        public string RhesusColor => RhesusColorMapping.GetColor(Rhesus);
 
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     }

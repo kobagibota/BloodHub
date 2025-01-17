@@ -55,5 +55,15 @@
             public const string Update = "api/product/update";
             public const string Delete = "api/product/delete";
         }
+
+        // Endpoint Patient
+        public static class PatientEndpoints
+        {
+            public const string GetAll = "api/patient";
+            public const string GetById = "api/patient/getbyid";
+            public const string Create = "api/patient/create";
+            public const string Update = "api/patient/update";
+            public const string Delete = "api/patient/delete";
+        }
     }
 }
