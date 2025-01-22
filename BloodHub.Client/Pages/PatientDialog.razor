@@ -9,11 +9,16 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="form" Model="@Patient" OnValidSubmit="OnValidSubmit" Spacing="3">
+            <MudTextField Label="Mã y tế" @bind-Value="Patient.MedicalId" FullWidth="true"
+                          Mask="@(new PatternMask("0000000000"))" @ref="medicalInput" />
+
             <!-- Họ và tên -->
-            <MudTextField @bind-Value="Patient.PatientName" Label="Họ và tên" Required="true" FullWidth="true" @ref="patientNameInput" Style="text-transform: uppercase;" />
+            <MudTextField Label="Họ và tên" @bind-Value="Patient.PatientName" Required="true"
+                          RequiredError="Bạn chưa nhập tên bệnh nhân" FullWidth="true" Style="text-transform: uppercase;" />
 
             <!-- Ngày sinh -->
-            <MudDatePicker Label="Ngày sinh" T="DateTime" @bind-Date="Patient.DateOfBirth" Required="true" DateFormat="dd/MM/yyyy" Immediate="true" />
+            <MudDatePicker Label="Ngày sinh" @bind-Date="selectDOB" DateFormat="dd/MM/yyyy"
+                           Required="true" RequiredError="Ngày sinh không được để trống" />
 
             <MudText>Tuổi: @Patient.Age</MudText>
 
@@ -68,18 +73,29 @@
     [Parameter] public Patient Patient { get; set; } = new Patient();
 
     private Patient originalPatient = new Patient();
-    private MudForm? form; // Changed to nullable for safer null-checking
+    private MudForm? form;
     private bool isLoading = false;
-    private MudTextField<string>? patientNameInput; // Nullable for safer handling
+    private MudTextField<string?>? medicalInput;
+    private DateTime? selectDOB
+    {
+        get => Patient.DateOfBirth;
+        set
+        {
+            if (value.HasValue)
+            {
+                Patient.DateOfBirth = value.Value;
+            }
+        }
+    }
 
     protected override void OnInitialized()
     {
-        // Deep copy of Patient to preserve original values
         if (Patient != null)
         {
             originalPatient = new Patient
                 {
                     Id = Patient.Id,
+                    MedicalId = Patient.MedicalId,
                     PatientName = Patient.PatientName,
                     DateOfBirth = Patient.DateOfBirth,
                     Gender = Patient.Gender,
@@ -89,7 +105,7 @@
         }
         else
         {
-            Patient.DateOfBirth = DateTime.Now.AddYears(-10);
+            Patient = new Patient();
         }
     }
 
@@ -97,7 +113,7 @@
     {
         if (firstRender)
         {
-            await FocusPatientNameInput();
+            await FocusMedicalInput();
         }
     }
 
@@ -105,7 +121,7 @@
     {
         if (form != null)
         {
-            await form.Validate(); // Validate the form before submission
+            await form.Validate();
             if (form.IsValid)
             {
                 await OnValidSubmit();
@@ -126,12 +142,12 @@
             if (!result.Success)
             {
                 await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
-                await FocusPatientNameInput();
+                await FocusMedicalInput();
                 isLoading = false;
                 return;
             }
 
-            MudDialog.Close(DialogResult.Ok(true)); // Close dialog with success result
+            MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
@@ -145,10 +161,10 @@
 
     private void CloseDialog()
     {
-        // Restore original Patient values if cancelled
         if (Patient != null)
         {
             Patient.Id = originalPatient.Id;
+            Patient.MedicalId = originalPatient.MedicalId;
             Patient.PatientName = originalPatient.PatientName;
             Patient.DateOfBirth = originalPatient.DateOfBirth;
             Patient.Gender = originalPatient.Gender;
@@ -156,21 +172,15 @@
             Patient.Rhesus = originalPatient.Rhesus;
         }
 
-        MudDialog.Cancel(); // Close dialog without saving
+        MudDialog.Cancel();
     }
 
-    private async Task FocusPatientNameInput()
+    private async Task FocusMedicalInput()
     {
-        await Task.Delay(200); // Ensure the dialog is fully rendered before focusing
-        if (patientNameInput != null)
+        await Task.Delay(200);
+        if (medicalInput != null)
         {
-            await patientNameInput.FocusAsync();
+            await medicalInput.FocusAsync();
         }
-    }
-
-    private void OnChanged(DateTime newDOB)
-    {
-        Patient.DateOfBirth = newDOB;
-        StateHasChanged();
     }
 }

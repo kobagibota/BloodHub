@@ -11,21 +11,19 @@ namespace BloodHub.Shared.Entities
         [Required, MaxLength(200)]
         public string PatientName { get; set; } = string.Empty;
 
-        private DateTime? dateOfBirth;
-        public DateTime? DateOfBirth
-        {
-            get => dateOfBirth;
-            set => dateOfBirth = value;
-        }
+        public DateTime DateOfBirth { get; set; }
 
         public string Age
         {
             get
             {
-                if (!DateOfBirth.HasValue) return string.Empty;
+                if (DateOfBirth == DateTime.MinValue)
+                {
+                    return string.Empty;
+                }
 
                 var today = DateTime.Today;
-                var ageInDays = (today - DateOfBirth.Value).Days;
+                var ageInDays = (today - DateOfBirth).Days;
                 if (ageInDays < 30)
                 {
                     return $"{ageInDays} ngày";
@@ -37,7 +35,7 @@ namespace BloodHub.Shared.Entities
                     return $"{ageInMonths} tháng";
                 }
 
-                var ageInYears = today.Year - DateOfBirth.Value.Year;
+                var ageInYears = today.Year - DateOfBirth.Year;
                 if (DateOfBirth > today.AddYears(-ageInYears))
                 {
                     ageInYears--;

@@ -3,137 +3,299 @@
 
 @using BloodHub.Client.Components
 @using BloodHub.Client.Services
+@using BloodHub.Shared.DTOs
 @using BloodHub.Shared.Entities
 @using BloodHub.Shared.Extentions
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 
 @inject PatientService PatientService
+@inject OrderService OrderService
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
 
 <PageTitle>Danh sách bệnh nhân</PageTitle>
 
 <RoleAuthorizeView Roles="Manager,Admin,User"> 
-    <MudPaper Class="m-2" Elevation="3">
-        <!-- Table Section to Display Patients -->
-        <MudTable Items="patients" FixedHeader="true" Dense="true" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
-                  Filter="new Func<Patient,bool>(FilterFunc)" @bind-SelectedItem="selectedItem" HorizontalScrollbar="true">
-            <ToolBarContent>
-                <MudText Typo="Typo.h4" Class="mb-2">Danh sách bệnh nhân</MudText>
+    <MudGrid Class="pa-3" Spacing="2" Style="height: calc(100vh - 80px);">
+        <!-- Danh sách bệnh nhân --> 
+        <MudItem xs="12" md="7"> 
+            <MudTable T="Patient" Items="patients" FixedHeader="true" Dense="true" Striped="true" Hover="true"
+                      Bordered="true" Loading="isLoading" Style="height: calc(100vh - 80px); overflow-y: auto;"
+                        Filter="new Func<Patient,bool>(FilterFunc)" SelectedItem="selectedPatient"
+                      SelectedItemChanged="@(patient => OnSelectedPatientChanged(patient))" HorizontalScrollbar="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h4" Class="mb-2">Danh sách bệnh nhân</MudText>
 
-                <MudSpacer />
+                    <MudSpacer />
 
-                <!-- Search Field -->
-                <MudTextField @bind-Value="searchString" Placeholder="Tìm kiếm"
-                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
-                              AdornmentColor="Color.Secondary" IconSize="Size.Medium"
-                              Class="mt-0" Style="margin-right: 12px;" Disabled="@isLoading" />
+                    <!-- Search Field -->
+                    <MudTextField @bind-Value="searchPatient" Placeholder="Tìm kiếm" Clearable="true"
+                                    Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                    AdornmentColor="Color.Secondary" IconSize="Size.Medium"
+                                    Class="mt-0" Style="margin-right: 12px;" Disabled="@isLoading" />
 
-                <!-- Add New Button -->
-                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                           Color="Color.Info" OnClick="@(() => OpenPatientDialog(null))"
-                           Size="Size.Medium" Disabled="@isLoading">
-                    Thêm mới
-                </MudButton>            
-            </ToolBarContent>
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                                Color="Color.Info" OnClick="@(() => OpenPatientDialog(null))"
+                                Size="Size.Medium" Disabled="@isLoading">
+                        Thêm bệnh nhân mới
+                    </MudButton>
+                </ToolBarContent>
 
-            <ColGroup>
-                <col style="width: 30%; min-width:100px;" />
-                <col style="width: 12%; min-width:80px;" />
-                <col style="width: 10%; min-width:60px;" />
-                <col style="width: 8%; min-width:60px;" />
-                <col style="width: auto; min-width:100px;" />
-                <col style="width: 10%; min-width:60px;" />
-                <col style="width: 10%; min-width:60px;" />
-            </ColGroup>
+                <ColGroup>
+                    <col style="width: 10%; min-width:40px;" />
+                    <col style="width: 20%; min-width:100px;" />
+                    <col style="width: 10%; min-width:60px;" />
+                    <col style="width: 8%; min-width:60px;" />
+                    <col style="width: 10%; min-width:60px;" />
+                    <col style="width: 8%; min-width:40px;" />
+                </ColGroup>
 
-            <!-- Table Header -->
-            <HeaderContent>
-                <MudTh><MudTableSortLabel SortBy="new Func<Patient, object>(x => x.PatientName)">Họ và tên</MudTableSortLabel></MudTh>
-                <MudTh Style="text-align:center">Ngày sinh</MudTh>
-                <MudTh>Tuổi</MudTh>
-                <MudTh Style="text-align:center">Giới tính</MudTh>
-                <MudTh>Địa chỉ</MudTh>
-                <MudTh Style="text-align:center">Nhóm máu</MudTh>
-                <MudTh Style="text-align:center" Class="sticky-right">Hành động</MudTh>
-            </HeaderContent>
+                <!-- Table Header -->
+                <HeaderContent>
+                    <MudTh Style="text-align:center">
+                        <MudTableSortLabel SortBy="new Func<Patient, object>(x => x.MedicalId)">Mã y tế</MudTableSortLabel>
+                    </MudTh>
+                    <MudTh>
+                        <MudTableSortLabel SortBy="new Func<Patient, object>(x => x.PatientName)">Họ và tên</MudTableSortLabel>
+                    </MudTh>
+                    <MudTh Style="text-align:center">Tuổi</MudTh>
+                    <MudTh Style="text-align:center">Giới tính</MudTh>
+                    <MudTh Style="text-align:center">Nhóm máu</MudTh>
+                    <MudTh Style="text-align:center">Hành động</MudTh>
+                </HeaderContent>
 
-            <!-- Table Rows -->
-            <RowTemplate>
-                <MudTd DataLabel="Họ và tên" Style="text-transform: uppercase;">@context.PatientName</MudTd>
-                <MudTd DataLabel="Ngày sinh" Style="text-align:center">
-                    @(context.DateOfBirth.HasValue ? context.DateOfBirth.Value.ToString("dd/MM/yyyy") : "N/A")
-                </MudTd>
-                <MudTd DataLabel="Tuổi">@context.Age</MudTd>
-                <MudTd DataLabel="Giới tính" Style="text-align:center">
-                    <MudChip T="string" Color="@((context.Gender == Gender.Male) ? Color.Success : Color.Warning)" Variant="Variant.Text">
-                        @GenderMapping.EnumToStringMap[context.Gender]
-                    </MudChip>
-                </MudTd>
-                <MudTd DataLabel="Địa chỉ">@context.Address</MudTd>
-                <MudTd DataLabel="Nhóm máu" Style="text-align:center">                    
-                    <span style="background-color:@context.BloodGroupColor; color:white; padding: 5px 10px; border-radius: 16px; display: inline-block;">
-                        @context.BloodGroup 
-                    </span> 
-                    <span style="background-color:@context.RhesusColor; color:white; padding: 5px 10px; border-radius: 16px; display: inline-block;">
-                        @(context.Rhesus == Rhesus.Positive ? "Rh(+)" : "Rh(-)")
-                    </span>
-                </MudTd>
+                <!-- Table Rows -->
+                <RowTemplate>
+                    <MudTd DataLabel="Mã y tế" Style="text-align:center">@context.MedicalId</MudTd>
+                    <MudTd DataLabel="Họ và tên" Style="text-transform: uppercase;">@context.PatientName</MudTd>
+                    <MudTd DataLabel="Tuổi" Style="text-align:center">@context.Age</MudTd>
+                    <MudTd DataLabel="Giới tính" Style="text-align:center;">
+                        <span style="color:@((context.Gender == Gender.Female) ? "orange" : "blue")">
+                            @GenderMapping.EnumToStringMap[context.Gender]
+                        </span>
+                    </MudTd>
+                    <MudTd DataLabel="Nhóm máu" Style="text-align:center">
+                        <span style="color:@context.BloodGroupColor;">
+                            @context.BloodGroup
+                        </span>,
+                        <span style="color:@context.RhesusColor;">
+                            @(context.Rhesus == Rhesus.Positive ? "Rh(+)" : "Rh(-)")
+                        </span>
+                    </MudTd>
+                    <MudTd DataLabel="Hành động" Style="text-align:center">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                        OnClick="@(() => OpenPatientDialog(selectedPatient))"
+                                        Disabled="@(selectedPatient == null || isLoading)">
+                            Sửa
+                        </MudIconButton>
 
-                <!-- Action Buttons Column -->
-                <MudTd Style="text-align:center" DataLabel="Hành động" Class="sticky-right">
-                    <!-- Edit Button -->
-                    <AuthorizeView> 
-                        <Authorized Context="authContext">
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenPatientDialog(context))" 
-                                            Disabled="@(authContext.User.IsInRole("User"))">Sửa</MudIconButton>
-                        </Authorized>
-                    </AuthorizeView>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                        OnClick="@(() => ConfirmDeletePatient(selectedPatient!.Id, selectedPatient))"
+                                        Disabled="@(selectedPatient == null || isLoading)">
+                            Xóa
+                        </MudIconButton>
+                    </MudTd>
+                </RowTemplate>
 
-                    <!-- Delete Button -->
-                    <AuthorizeView Roles="Admin,Manager"> 
-                        <Authorized Context="authContext">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeletePatient(context.Id, context))">Xóa</MudIconButton>
-                        </Authorized>
-                    </AuthorizeView>
-                </MudTd>
-            </RowTemplate>
+                <NoRecordsContent>
+                    <MudPaper Elevation="2" Class="pa-4 text-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Large" />
+                        <MudText Typo="Typo.h6" Class="mt-2">Không có dữ liệu</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Hãy kiểm tra lại bộ lọc hoặc thêm dữ liệu mới.</MudText>
+                    </MudPaper>
+                </NoRecordsContent>
 
-            <NoRecordsContent>
-                <MudText>Không có dữ liệu</MudText>
-            </NoRecordsContent>
+                <LoadingContent>
+                    <MudContainer Class="text-center">
+                        <MudText Typo="Typo.h6" Class="mt-2">Đang tải dữ liệu...</MudText>
+                    </MudContainer>
+                </LoadingContent>
+            </MudTable>
+        </MudItem>
 
-            <LoadingContent>
-                <MudText>Đang tải dữ liệu...</MudText>
-            </LoadingContent>
+        <!-- Thông tin bệnh nhân và Danh sách order --> 
+        <MudItem xs="12" md="5"> 
+            <MudGrid Class="p-2" Spacing="2"> 
+                <!-- Thông tin bệnh nhân --> 
+                <MudItem xs="12">                    
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">Bệnh nhân: <strong class="mud-error-text">@(selectedPatient?.PatientName.ToUpper())</strong></MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
 
-            <!-- Pagination -->
-            <PagerContent>
-                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100, int.MaxValue }" RowsPerPageString="Mỗi trang" AllItemsText="Tất cả" />
-            </PagerContent>
-        </MudTable>
-    </MudPaper>
+                        <MudCardContent>
+                            <MudGrid Spacing="1">
+                                <MudItem xs="8"> 
+                                    <MudText>Mã y tế: <strong>@selectedPatient?.MedicalId</strong></MudText>
+                                </MudItem>
+
+								<MudItem xs="4">
+                                    <MudText>Giới tính: <strong>@(selectedPatient.Id != 0 ? GenderMapping.EnumToStringMap[selectedPatient.Gender] : string.Empty)</strong></MudText>
+								</MudItem>
+
+                                <MudItem xs="8">
+                                    <MudText>Ngày sinh: <strong>@FormatDate(selectedPatient!.DateOfBirth)</strong></MudText>
+                                </MudItem>
+
+                                <MudItem xs="4"> 
+                                    <MudText>Tuổi: <strong>@selectedPatient?.Age</strong></MudText> 
+                                </MudItem> 
+
+								<MudItem xs="12">
+									<MudText>Địa chỉ: <em>@selectedPatient?.Address</em></MudText>
+								</MudItem>
+
+                                <MudDivider />
+
+								<MudItem xs="8">
+									<MudText>Chỉ định ngày: <strong>@FormatDate(selectedOrder.OrderDate)</strong></MudText>
+								</MudItem>
+
+								<MudItem xs="4">
+                                    <MudText>Nhóm máu: 
+                                        @if (selectedPatient == null || selectedPatient.Id == 0)
+                                        {
+                                            @string.Empty
+                                        }
+                                        else
+                                        {
+                                            <span style="background-color:@selectedPatient.BloodGroupColor; color:white; padding: 1px 4px; border-radius: 18px; display: inline-block;">
+                                                @selectedPatient.BloodGroup
+                                            </span>
+                                            <span style="background-color:@selectedPatient.RhesusColor; color:white; padding: 1px 4px; border-radius: 18px; display: inline-block;">
+                                                @(selectedPatient.Rhesus == Rhesus.Positive ? "Rh(+)" : "Rh(-)")
+                                            </span>
+                                        }
+                                    </MudText>
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudText>Bác sĩ chỉ định: <strong>@(selectedOrder.DoctorName ?? "")</strong></MudText>
+                                </MudItem>
+
+                                <MudItem xs="8">
+                                    <MudText>Khoa: <strong>@(selectedOrder.WardName ?? "")</strong></MudText>
+                                </MudItem>
+
+                                <MudItem xs="4">
+                                    <MudText>Phòng: <strong>@selectedOrder.Room</strong></MudText>
+                                </MudItem>
+
+                                <MudItem xs="12">
+                                    <MudText>Chẩn đoán: <em>@selectedOrder.Diagnosis</em></MudText>
+                                </MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+
+                        <MudCardActions>
+                            <MudButton Href="/crossmatch"
+                            StartIcon="@Icons.Material.Filled.Biotech" Color="Color.Tertiary"
+                            Variant="Variant.Outlined" FullWidth="true"
+                            Disabled="@(selectedPatient.Id == 0 || selectedOrder.Id == 0)">
+                                Xét nghiệm thuận hợp
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem> 
+
+                <!-- Thông tin order -->
+                <MudItem xs="12" Style="height: calc(100vh - 450px);">
+                    <MudTable T="OrderDto" Items="orders" FixedHeader="true" Dense="true" Striped="true" Hover="true"
+                              Bordered="true" Loading="isLoading" Style="height: calc(100vh - 450px); overflow-y: auto;" SortLabel="Sort By"
+                              @bind-SelectedItem="selectedOrder" HorizontalScrollbar="true">
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6" Class="mb-2">Danh sách chỉ định</MudText>
+
+                            <MudSpacer />
+
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                            Color="Color.Info" OnClick="@(() => OpenOrderDialog(selectedPatient, null))"
+                            Size="Size.Medium" Disabled="@(isLoading || selectedPatient == null)">
+                                Thêm chỉ định mới
+                            </MudButton>
+                        </ToolBarContent>
+
+                        <ColGroup>
+                            <col style="width: 30%; min-width:35px; text-align:center" />
+                            <col style="width: 50%; min-width:80px;" />
+                            <col style="width: 20%; min-width:30px;" />
+                        </ColGroup>
+
+                        <!-- Table Header -->
+                        <HeaderContent>
+                            <MudTh>
+                                <MudTableSortLabel Style="text-align:center" InitialDirection="SortDirection.Descending" SortBy="new Func<OrderDto, object>(x => x.OrderDate)">Ngày chỉ định</MudTableSortLabel>
+                            </MudTh>
+                            <MudTh>Bác sĩ chỉ định</MudTh>
+                            <MudTh Style="text-align:center">Hành động</MudTh>
+                        </HeaderContent>
+
+                        <!-- Table Rows -->
+                        <RowTemplate>
+                            <MudTd DataLabel="Ngày chỉ định" Style="text-align:center">@context.OrderDate.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd DataLabel="Bác sĩ chỉ định">@context.DoctorName</MudTd>
+                            <MudTd DataLabel="Hành động" Style="text-align:center">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                OnClick="@(() => OpenOrderDialog(selectedPatient, selectedOrder))"
+                                Disabled="@(selectedPatient == null || isLoading)">
+                                    Sửa
+                                </MudIconButton>
+
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                OnClick="@(() => ConfirmDeleteOrder(selectedOrder!.Id))"
+                                Disabled="@(selectedPatient == null || isLoading)">
+                                    Xóa
+                                </MudIconButton>
+                            </MudTd>
+                        </RowTemplate>
+
+                        <NoRecordsContent>
+                            <MudPaper Elevation="2" Class="pa-4 text-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Large" />
+                                <MudText Typo="Typo.h6" Class="mt-2">Không có dữ liệu</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Hãy kiểm tra lại bộ lọc hoặc thêm dữ liệu mới.</MudText>
+                            </MudPaper>
+                        </NoRecordsContent>
+
+                        <LoadingContent>
+                            <MudContainer Class="text-center">
+                                <MudText Typo="Typo.h6" Class="mt-2">Đang tải dữ liệu...</MudText>
+                            </MudContainer>
+                        </LoadingContent>
+                    </MudTable>
+                </MudItem> 
+            </MudGrid>
+        </MudItem> 
+    </MudGrid>
 </RoleAuthorizeView>
 
 @code {
     private List<Patient> patients = new List<Patient>();
-    private Patient selectedItem = new Patient();
-    private string searchString = ""; 
+    private List<OrderDto> orders = new List<OrderDto>();
+    private Patient selectedPatient = new Patient();
+    private OrderDto selectedOrder = new OrderDto();
+    private string searchPatient = ""; 
+    private string searchOrder = "";
     private bool isLoading = true;
+    private bool isOrderLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadPatients();
     }
 
-    private bool FilterFunc(Patient element) => FilterFunc(element, searchString);
+    private bool FilterFunc(Patient element) => FilterFunc(element, searchPatient);
 
-    private bool FilterFunc(Patient element, string searchString)
+    private bool FilterFunc(Patient element, string searchPatient)
     {
-        if (string.IsNullOrWhiteSpace(searchString))
+        if (string.IsNullOrWhiteSpace(searchPatient))
             return true;
-        if (element.PatientName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (element.PatientName.Contains(searchPatient, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.MedicalId != null && element.MedicalId.Contains(searchPatient, StringComparison.OrdinalIgnoreCase))
             return true;
         return false;
     }
@@ -202,5 +364,98 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task LoadOrders(Patient patient)
+    {
+        if (patient == null)
+        {
+            await DialogService.ShowMessageBox("lỗi", "Không thể tải chỉ định vì không có bệnh nhân được chọn.");
+            return;
+        }
+
+        var response = await OrderService.GetOrderByPatientId(selectedPatient.Id);
+        if (response.Success)
+        {
+            orders = response.Data ?? new List<OrderDto>();
+        }
+        else
+        {
+            await DialogService.ShowMessageBox("Lỗi", response.Message);
+        }
+    }
+
+    private async Task OnSelectedPatientChanged(Patient patient)
+    {
+        if (patient != null)
+        {
+            selectedPatient = patient;
+            await LoadOrders(selectedPatient);
+        }
+        selectedOrder = new OrderDto();
+    }
+
+    private async Task ConfirmDeleteOrder(int orderId)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Bạn có chắc chắn muốn xóa chỉ định này không?" },
+        };
+
+        var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false)
+        {
+            var response = await OrderService.DeleteOrder(orderId);
+            if (response.Success)
+            {
+                await LoadOrders(selectedPatient);
+            }
+            else
+            {
+                await DialogService.ShowMessageBox("Lỗi", response.Message);
+            }
+        }
+    }
+
+    private async Task EditOrder(OrderDto order)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Order", order },
+            { "Patient", selectedPatient }
+        };
+
+        var dialog = DialogService.Show<OrderDialog>("Chỉnh sửa chỉ định", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadOrders(selectedPatient);
+        }
+    }
+
+    private async Task OpenOrderDialog(Patient patient, OrderDto order)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Order", order ?? new OrderDto(){ OrderDate = DateTime.Now } },
+            { "Patient", patient ?? new Patient() }
+        };
+
+        string title = (order == null) ? "Thêm mới chỉ định" : "Chỉnh sửa thông tin chỉ định";
+        var dialog = DialogService.Show<OrderDialog>(title, parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadOrders(selectedPatient);
+        }
+    }
+
+    private string FormatDate(DateTime date)
+    {
+        return date == DateTime.MinValue ? string.Empty : date.ToString("dd/MM/yyyy");
     }
 }

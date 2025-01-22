@@ -14,7 +14,7 @@
         IWardRepository WardRepository { get; }
         IProductRepository ProductRepository { get; }
         IPatientRepository PatientRepository { get; }
-
+        IOrderRepository OrderRepository { get; }
 
         void Save();
         Task SaveAsync();

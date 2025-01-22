@@ -53,23 +53,24 @@ namespace BloodHub.Data.Repositories
 
         public async Task<IEnumerable<T>> GetListByAsync(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includes)
         {
-            IQueryable<T> items = _entitySet;
+            IQueryable<T> query = _entitySet;
 
-            if (includes != null)
+            // Thêm các bao gồm cần thiết nếu có
+            if (includes != null && includes.Any())
             {
-                foreach (var include in includes)
-                {
-                    items = items.Include(include);
-                }
+                query = includes.Aggregate(query, (current, include) => current.Include(include));
             }
 
+            // Áp dụng bộ lọc nếu có
             if (predicate != null)
             {
-                items = items.Where(predicate);
+                query = query.Where(predicate);
             }
 
-            return await items.ToListAsync();
+            // Trả về danh sách các phần tử
+            return await query.ToListAsync();
         }
+
 
         public void Remove(T entity)
         {

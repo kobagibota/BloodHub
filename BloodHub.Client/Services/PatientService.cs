@@ -35,7 +35,7 @@ namespace BloodHub.Client.Services
             var endpoint = $"{PatientEndpoints.GetById}/{id}";
             return await _httpClient.SendRequest<Patient>(HttpMethod.Get, endpoint);
         }
-
+              
         /// <summary>
         /// Tạo mới bệnh nhân.
         /// </summary>

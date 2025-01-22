@@ -73,12 +73,20 @@
                 </MudTd>
             </RowTemplate>
 
+            <!-- No Record -->
             <NoRecordsContent>
-                <MudText>Không có dữ liệu</MudText>
+                <MudPaper Elevation="2" Class="pa-4 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Large" />
+                    <MudText Typo="Typo.h6" Class="mt-2">Không có dữ liệu</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Hãy kiểm tra lại bộ lọc hoặc thêm dữ liệu mới.</MudText>
+                </MudPaper>
             </NoRecordsContent>
 
+            <!-- Loading -->
             <LoadingContent>
-                <MudText>Đang tải dữ liệu...</MudText>
+                <MudContainer Class="text-center">
+                    <MudText Typo="Typo.h6" Class="mt-2">Đang tải dữ liệu...</MudText>
+                </MudContainer>
             </LoadingContent>
 
             <!-- Pagination -->

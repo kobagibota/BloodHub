@@ -65,5 +65,16 @@
             public const string Update = "api/patient/update";
             public const string Delete = "api/patient/delete";
         }
+
+        // Endpoint Order
+        public static class OrderEndpoints
+        {
+            public const string GetAll = "api/order";
+            public const string GetById = "api/order/getbyid";
+            public const string GetByPatientId = "api/order/getbypatientid";
+            public const string Create = "api/order/create";
+            public const string Update = "api/order/update";
+            public const string Delete = "api/order/delete";
+        }
     }
 }

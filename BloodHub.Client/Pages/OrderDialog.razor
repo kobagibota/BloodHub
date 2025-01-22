@@ -1,0 +1,250 @@
+﻿@using BloodHub.Client.Services
+@using BloodHub.Shared.DTOs
+@using BloodHub.Shared.Entities
+@using BloodHub.Shared.Extentions
+@using BloodHub.Shared.Request
+@using System.Linq
+
+@inject IDialogService DialogService
+@inject OrderService OrderService
+@inject DoctorService DoctorService
+@inject WardService WardService
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid Spacing="1">
+            <MudItem xs="12">
+                <MudText>Tên bệnh nhân: <strong>@Patient.PatientName</strong></MudText>
+            </MudItem>
+
+            <MudItem xs="6">
+                <MudText>Tuổi: <strong>@Patient.Age</strong></MudText>
+            </MudItem>
+
+            <MudItem xs="6">
+                <MudText>Giới tính: <strong>@GenderMapping.EnumToStringMap[Patient.Gender]</strong></MudText>
+            </MudItem>
+
+            <MudItem xs="12">
+                <MudText>Nhóm máu: <strong>@Patient.BloodGroupDescription</strong></MudText>
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="my-2" />
+
+        <MudForm @ref="form" Model="@Order" OnValidSubmit="OnValidSubmit">
+            <MudGrid Spacing="1">
+                <MudItem xs="12">
+                    <MudAutocomplete T="Doctor" Label="Bác sĩ chỉ định"
+                                     @bind-Value="SelectedDoctor"
+                                     Variant="Variant.Outlined"
+                                     Required="true"
+                                     SearchFunc="SearchDoctors"
+                                     ToStringFunc="@(doctor => doctor.DoctorName)"
+                                     Clearable="true"
+                                     Placeholder="Chọn bác sĩ chỉ định..."
+                                     ShowProgressIndicator="true" ProgressIndicatorColor="Color.Primary" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudAutocomplete T="Ward" Label="Khoa"
+                                     @bind-Value="SelectedWard"
+                                     Variant="Variant.Outlined"
+                                     Required="true"
+                                     SearchFunc="SearchWards"
+                                     ToStringFunc="@(ward => ward.WardName)"
+                                     Clearable="true"
+                                     Placeholder="Chọn khoa..."
+                                     ShowProgressIndicator="true" ProgressIndicatorColor="Color.Primary" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudTextField Label="Phòng" @bind-Value="Order.Room" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="6">
+                    <MudDatePicker Label="Ngày chỉ định" @bind-Date="selectOrderDate" DateFormat="dd/MM/yyyy"
+                    Required="true" RequiredError="Ngày chỉ định không được để trống" Variant="Variant.Outlined" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Chẩn đoán" @bind-Value="Order.Diagnosis" Variant="Variant.Outlined" Lines="3" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Color="Color.Secondary" Variant="Variant.Outlined">Hủy</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="isLoading" OnClick="SubmitForm">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            }
+            else
+            {
+                <MudText>@(Order.Id == 0 ? "Thêm mới" : "Cập nhật")</MudText>
+            }
+        </MudButton>        
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Patient Patient { get; set; } = new Patient();
+    [Parameter] public OrderDto Order { get; set; } = new OrderDto();
+
+    private List<Doctor> DoctorList = new List<Doctor>();
+    private List<Ward> WardList = new List<Ward>();
+
+    private Doctor SelectedDoctor = new();
+    private Ward SelectedWard = new();
+
+    private bool isLoading = false;
+    private MudForm? form;
+    private OrderDto originalOrder = new OrderDto();
+
+    private DateTime? selectOrderDate
+    {
+        get => Order.OrderDate;
+        set
+        {
+            if (value.HasValue)
+            {
+                Order.OrderDate = value.Value;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var doctors = await DoctorService.GetAllDoctors();
+        DoctorList = (doctors.Success && doctors.Data != null) ? doctors.Data : new List<Doctor>();
+
+        var wards = await WardService.GetAllWards();
+        WardList = (wards.Success && wards.Data != null) ? wards.Data : new List<Ward>();
+
+        if (Order.Id != 0)
+        {
+            originalOrder = new OrderDto
+                {
+                    Id = Order.Id,
+                    WardId = Order.WardId,
+                    PatientId = Order.PatientId,
+                    DoctorId = Order.DoctorId,
+                    Diagnosis = Order.Diagnosis,
+                    OrderDate = Order.OrderDate
+                };
+
+            SelectedDoctor = DoctorList.FirstOrDefault(d => d.Id == Order.DoctorId) ?? new Doctor();
+
+            SelectedWard = WardList.FirstOrDefault(d => d.Id == Order.DoctorId) ?? new Ward();
+        }
+        else
+        {
+            Order = new OrderDto() { OrderDate = DateTime.Now };
+        }
+    }
+
+    // Tìm kiếm bác sĩ trong MudAutocomplete
+    private async Task<IEnumerable<Doctor>> SearchDoctors(string value, CancellationToken token)
+    {
+        // Giả lập độ trễ để phù hợp với tình huống thực tế
+        await Task.Delay(5, token);
+
+        // Nếu không có giá trị tìm kiếm, trả về toàn bộ danh sách
+        if (string.IsNullOrWhiteSpace(value))
+            return DoctorList;
+
+        return DoctorList.Where(d => d.DoctorName.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // Tìm kiếm khoa trong MudAutocomplete
+    private async Task<IEnumerable<Ward>> SearchWards(string value, CancellationToken token)
+    {
+        // Giả lập độ trễ
+        await Task.Delay(5, token);
+
+        // Nếu không có giá trị tìm kiếm, trả về toàn bộ danh sách
+        if (string.IsNullOrWhiteSpace(value))
+            return WardList;
+
+        // Lọc danh sách khoa theo từ khóa tìm kiếm
+        return WardList.Where(w => w.WardName.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task SubmitForm()
+    {
+        if (form != null)
+        {
+            await form.Validate();
+            if (form.IsValid)
+            {
+                await OnValidSubmit();
+            }
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true;
+
+        try
+        {
+            if (SelectedDoctor == null || SelectedWard == null)
+            {
+                await DialogService.ShowMessageBox("Lỗi", "Bác sĩ chỉ định và Khoa không được để trống.");
+                return;
+            }
+
+            Order.DoctorId = SelectedDoctor.Id;
+            Order.WardId = SelectedWard.Id;
+            Order.PatientId = Patient.Id;
+
+            var orderRequest = new OrderRequest()
+                {
+                    PatientId = Order.PatientId,
+                    DoctorId = Order.DoctorId,
+                    WardId = Order.WardId,
+                    OrderDate = Order.OrderDate,
+                    Diagnosis = Order.Diagnosis,
+                    Room = Order.Room
+                };
+
+            var response = Order.Id == 0
+            ? await OrderService.CreateOrder(orderRequest)
+            : await OrderService.UpdateOrder(Order.Id, orderRequest);
+
+            if (!response.Success)
+            {
+                await DialogService.ShowMessageBox("Lỗi dữ liệu", response.Message);
+                isLoading = false;
+                return;
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi {ex.Message}.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CloseDialog()
+    {
+        if (Order != null)
+        {
+            Order.Id = originalOrder.Id;
+            Order.WardId = originalOrder.WardId;
+            Order.PatientId = originalOrder.PatientId;
+            Order.DoctorId = originalOrder.DoctorId;
+            Order.Diagnosis = originalOrder.Diagnosis;
+            Order.OrderDate = originalOrder.OrderDate;
+        }
+
+        MudDialog.Cancel();
+    }
+
+}

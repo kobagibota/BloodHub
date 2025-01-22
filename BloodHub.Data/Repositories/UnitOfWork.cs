@@ -22,6 +22,7 @@ namespace BloodHub.Data.Repositories
         private IWardRepository? _wardRepository;
         private IProductRepository? _productRepository;
         private IPatientRepository? _patientRepository;
+        private IOrderRepository? _orderRepository;
 
 
         #endregion
@@ -85,6 +86,11 @@ namespace BloodHub.Data.Repositories
         public IPatientRepository PatientRepository
         {
             get { return _patientRepository ??= new PatientRepository(_dbContext); }
+        }
+
+        public IOrderRepository OrderRepository
+        {
+            get { return _orderRepository ??= new OrderRepository(_dbContext); }
         }
 
         #endregion

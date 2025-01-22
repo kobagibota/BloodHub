@@ -41,5 +41,7 @@ builder.Services.AddScoped<NursingService>();
 builder.Services.AddScoped<WardService>();
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<PatientService>();
+builder.Services.AddScoped<OrderService>();
+
 
 await builder.Build().RunAsync();
