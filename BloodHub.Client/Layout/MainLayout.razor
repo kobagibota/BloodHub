@@ -58,7 +58,7 @@ CloseOnEscapeKey="true" />
 
             <MudDivider Class="my-2" />
 
-            <MudNavGroup Title="Danh mục" Icon="@Icons.Material.Filled.List" Expanded="true">
+            <MudNavGroup Title="Danh mục" Icon="@Icons.Material.Filled.List" Expanded="false">
                 <MudNavLink Href="/doctors" Icon="@Icons.Material.Filled.Man" IconColor="Color.Success" >Bác sĩ</MudNavLink>
                 <MudNavLink Href="/nursings" Icon="@Icons.Material.Filled.Woman" IconColor="Color.Success">Điều dưỡng</MudNavLink>
                 <MudNavLink Href="/wards" Icon="@Icons.Material.Filled.Room" IconColor="Color.Success">Khoa phòng</MudNavLink>
@@ -67,8 +67,15 @@ CloseOnEscapeKey="true" />
 
             </MudNavGroup>
 
+			<MudDivider Class="my-2" />
+
+            <MudNavGroup Title="Quản lý ca trực" Icon="@Icons.Material.Filled.List" Expanded="true">
+                <MudNavLink Href="/shifts" Icon="@Icons.Material.Filled.Man" IconColor="Color.Success">Ca trực</MudNavLink>
+            </MudNavGroup>
+
             <MudDivider Class="my-2" />
 
+            <MudNavLink Href="/users" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Warning">Người dùng</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 

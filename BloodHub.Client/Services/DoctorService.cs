@@ -29,6 +29,12 @@ namespace BloodHub.Client.Services
             return await _httpClient.SendRequest<List<Doctor>>(HttpMethod.Get, endpoint);
         }
 
+        public async Task<ServiceResponse<List<Doctor>>> GetActDoctors()
+        {
+            var endpoint = $"{DoctorEndpoints.GetAct}";
+            return await _httpClient.SendRequest<List<Doctor>>(HttpMethod.Get, endpoint);
+        }
+
         /// <summary>
         /// Lấy thông tin bác sĩ theo ID.
         /// </summary>

@@ -1,0 +1,164 @@
+﻿@using BloodHub.Client.Services
+@using BloodHub.Shared.DTOs
+@using BloodHub.Shared.Entities
+@using BloodHub.Shared.Extentions
+@using BloodHub.Shared.Request
+@using System.Linq
+
+@inject IDialogService DialogService
+@inject ShiftService ShiftService
+@inject UserService UserService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="@Shift" OnValidSubmit="OnValidSubmit">
+            <MudTextField Label="Tên ca trực" @bind-Value="Shift.ShiftName" Variant="Variant.Outlined" Required="true" />
+
+            <MudDatePicker Label="Thời gian bắt đầu" @bind-Value="Shift.ShiftStart" DateFormat="dd/MM/yyyy"
+            Required="true" RequiredError="Thời gian bắt đầu không được để trống" Variant="Variant.Outlined" />
+
+            <MudDatePicker Label="Thời gian kết thúc" @bind-Value="Shift.ShiftEnd" DateFormat="dd/MM/yyyy"
+            Required="true" RequiredError="Thời gian kết thúc không được để trống" Variant="Variant.Outlined" />
+
+            <MudSelect T="List<int>" Label="Nhân viên trực" @bind-Value="Shift.UserIds" Multiple="true">
+                @foreach (var user in AvailableUsers)
+                {
+                    <MudSelectItem T="int" Value="user.UserId">@user.ShortName</MudSelectItem>
+                }
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Color="Color.Secondary" Variant="Variant.Outlined">Hủy</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="isLoading" OnClick="SubmitForm">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            }
+            else
+            {
+                <MudText>@(Shift.Id == 0 ? "Thêm mới" : "Cập nhật")</MudText>
+            }
+        </MudButton>        
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ShiftRequest CurrentShift { get; set; } = new ShiftRequest();
+
+    private List<ShiftUserDto> AvailableUsers = new List<ShiftUserDto>();
+
+    private bool isLoading = false;
+    private MudForm? form;
+    private ShiftRequest Shift = new ShiftRequest();
+
+    // private DateTime? selectOrderDate
+    // {
+    //     get => Order.OrderDate == DateTime.MinValue ? DateTime.Now : Order.OrderDate;
+    //     set
+    //     {
+    //         if (value.HasValue)
+    //         {
+    //             Order.OrderDate = value.Value;
+    //         }
+    //     }
+    // }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await UserService.GetAvailableUsersForShifts();
+        if (response.Data != null && response.Success)
+        {
+            AvailableUsers = response.Data;
+        }
+        else
+        {
+            await DialogService.ShowMessageBox("Lỗi không thể lấy danh sách nhân viên trực", response.Message);
+        }
+
+        if (CurrentShift.Id != 0)
+        {
+            Shift = new ShiftRequest
+            {
+                Id = CurrentShift.Id,
+				ShiftName = CurrentShift.ShiftName,
+				ShiftStart = CurrentShift.ShiftStart,
+				ShiftEnd = CurrentShift.ShiftEnd,
+				UserIds = CurrentShift.UserIds
+            };
+        }
+    }
+   
+    private async Task SubmitForm()
+    {
+        if (form != null)
+        {
+            await form.Validate();
+            if (form.IsValid)
+            {
+                await OnValidSubmit();
+            }
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true;
+
+        try
+        {
+            if (Shift.UserIds == null)
+            {
+                await DialogService.ShowMessageBox("Lỗi", "Nhân viên trực không được để trống.");
+                return;
+            }            
+
+            var shiftRequest = new ShiftRequest()
+                {
+					ShiftName = Shift.ShiftName,
+					ShiftStart = Shift.ShiftStart,
+                    ShiftEnd = Shift.ShiftEnd,
+					UserIds = Shift.UserIds
+                };
+
+            var response = Shift.Id == 0
+            ? await ShiftService.CreateShift(shiftRequest)
+            : await ShiftService.UpdateShift(Shift.Id, shiftRequest);
+
+            if (!response.Success)
+            {
+                await DialogService.ShowMessageBox("Lỗi dữ liệu", response.Message);
+                isLoading = false;
+                return;
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi {ex.Message}.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CloseDialog()
+    {
+        if (Shift.Id != 0)
+        {
+			CurrentShift.Id = Shift.Id;
+            CurrentShift.ShiftName = Shift.ShiftName;
+            CurrentShift.ShiftStart = Shift.ShiftStart;
+            CurrentShift.ShiftEnd = Shift.ShiftEnd;
+			CurrentShift.UserIds = Shift.UserIds;
+        }
+
+        MudDialog.Cancel();
+    }
+
+}

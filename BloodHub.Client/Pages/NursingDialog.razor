@@ -8,8 +8,8 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="form" Model="@Nursing" OnValidSubmit="OnValidSubmit" Spacing="3">
-            <MudTextField @bind-Value="Nursing.NursingName" Label="Tên điều dưỡng" Required="true" FullWidth="true" @ref="nursingNameInput" />
-            <MudSwitch @bind-Value="Nursing.IsHide" Label="Ẩn" Color="Color.Secondary" />
+            <MudTextField @bind-Value="Nursing.NursingName" Label="Tên điều dưỡng" Required="true" FullWidth="true" @ref="nursingNameInput" Variant="Variant.Outlined" />
+            <MudSwitch @bind-Value="Nursing.IsHide" Label="Ẩn" Color="Color.Secondary" Variant="Variant.Outlined" />
         </MudForm>
     </DialogContent>
 

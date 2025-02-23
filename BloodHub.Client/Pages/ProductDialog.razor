@@ -6,10 +6,10 @@
 
 <MudDialog>
     <DialogContent>
-        <MudForm @ref="form" Model="@Product" OnValidSubmit="OnValidSubmit" Spacing="3">
-            <MudTextField @bind-Value="Product.ProductName" Label="Tên sản phẩm" Required="true" FullWidth="true" @ref="productNameInput" />
+        <MudForm @ref="form" Model="@Product" OnValidSubmit="OnValidSubmit" Spacing="3"> 
+            <MudTextField @bind-Value="Product.ProductName" Label="Tên sản phẩm" Required="true" FullWidth="true" @ref="productNameInput" Variant="Variant.Outlined" />
 
-            <MudTextField @bind-Value="Product.Unit" Label="Đơn vị tính" Required="true" FullWidth="true" />
+            <MudTextField @bind-Value="Product.Unit" Label="Đơn vị tính" Required="true" FullWidth="true" Variant="Variant.Outlined" />
         </MudForm>
     </DialogContent>
 

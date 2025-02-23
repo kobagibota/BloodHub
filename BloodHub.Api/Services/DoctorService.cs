@@ -11,6 +11,7 @@ namespace BloodHub.Api.Services
     public interface IDoctorService
     {
         Task<ServiceResponse<IEnumerable<Doctor>>> GetAll();
+        Task<ServiceResponse<IEnumerable<Doctor>>> GetAct();
         Task<ServiceResponse<Doctor?>> GetById(int doctorId);
         Task<ServiceResponse<Doctor>> Add(DoctorRequest request);
         Task<ServiceResponse<Doctor?>> Update(int doctorId, DoctorRequest request);
@@ -44,7 +45,7 @@ namespace BloodHub.Api.Services
                     return response;
                 }
 
-                var duplicate = await _unitOfWork.DoctorRepository.IsExists(0, request.DoctorName);
+                var duplicate = await _unitOfWork.DoctorRepository.IsExists(d => d.DoctorName == request.DoctorName);
                 if (duplicate)
                 {
                     response.Success = false;
@@ -143,6 +144,26 @@ namespace BloodHub.Api.Services
             return response;
         }
 
+        public async Task<ServiceResponse<IEnumerable<Doctor>>> GetAct()
+        {
+            var response = new ServiceResponse<IEnumerable<Doctor>>();
+
+            try
+            {
+                var doctors = await _unitOfWork.DoctorRepository.GetListByAsync(x => x.IsHide == false);
+
+                response.Success = true;
+                response.Data = doctors;
+            }
+            catch (Exception)
+            {
+                response.Success = false;
+                response.Message = "Xảy ra lỗi trong quá trình lấy danh sách bác sĩ.";
+            }
+
+            return response;
+        }
+
         public async Task<ServiceResponse<Doctor?>> GetById(int doctorId)
         {
             var response = new ServiceResponse<Doctor?>();
@@ -174,7 +195,7 @@ namespace BloodHub.Api.Services
                     return response;
                 }
 
-                bool duplicate = await _unitOfWork.DoctorRepository.IsExists(doctorId, request.DoctorName);
+                bool duplicate = await _unitOfWork.DoctorRepository.IsExists(d => d.DoctorName == request.DoctorName);
                 if (duplicate)
                 {
                     response.Success = false;

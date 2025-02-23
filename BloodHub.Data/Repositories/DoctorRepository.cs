@@ -1,6 +1,7 @@
 ﻿using BloodHub.Data.Data;
 using BloodHub.Shared.Entities;
 using BloodHub.Shared.Interfaces;
+using System.Linq.Expressions;
 
 namespace BloodHub.Data.Repositories
 {
@@ -11,9 +12,9 @@ namespace BloodHub.Data.Repositories
 
         }
 
-        public async Task<bool> IsExists(int doctorId, string doctorName)
+        public async Task<bool> IsExists(Expression<Func<Doctor, bool>> predicate)
         {
-            return await ExistsAsync(d => d.DoctorName == doctorName && d.Id != doctorId);
+            return await ExistsAsync(predicate);
         }
     }
 }

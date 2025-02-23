@@ -23,7 +23,7 @@ namespace BloodHub.Api.Services
         /// </summary>
         /// <param name="userDto">Thông tin người dùng để tạo JWT.</param>
         /// <returns>Chuỗi Access Token đã mã hóa.</returns>
-        public string GenerateAccessToken(UserDto userDto)
+        public string GenerateAccessToken(AuthDto userDto)
         {
             // Khóa bí mật
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecurityKey!));

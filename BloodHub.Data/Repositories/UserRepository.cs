@@ -1,6 +1,7 @@
 ﻿using BloodHub.Data.Data;
 using BloodHub.Shared.Entities;
 using BloodHub.Shared.Interfaces;
+using System.Linq.Expressions;
 
 namespace BloodHub.Data.Repositories
 {
@@ -10,6 +11,11 @@ namespace BloodHub.Data.Repositories
         {
             var user = await _dbContext.Users.FindAsync(id);
             return user == null ? "Unknown" : user.FullName;
+        }
+
+        public async Task<bool> IsExists(Expression<Func<User, bool>> predicate)
+        {
+            return await ExistsAsync(predicate);
         }
     }
 }

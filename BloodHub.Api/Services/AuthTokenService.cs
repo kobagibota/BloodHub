@@ -13,7 +13,7 @@ namespace BloodHub.Api.Services
     public interface IAuthTokenService
     {
         Task LogActionAsync(int userId, Activity activity, string token);
-        Task<ServiceResponse<TokenResponse>> GenerateTokensAsync(UserDto userDto);
+        Task<ServiceResponse<TokenResponse>> GenerateTokensAsync(AuthDto userDto);
         Task<string> GenerateRefreshTokenAsync(int userId);
         Task<ServiceResponse<TokenResponse>> RotateRefreshTokenAsync(string token); // Xoay Refresh Token
         Task RevokeTokensByTypeAsync(int userId, TokenType tokenType); // Thu hồi tất cả token theo loại
@@ -56,7 +56,7 @@ namespace BloodHub.Api.Services
             await _unitOfWork.SaveAsync();
         }
 
-        public async Task<ServiceResponse<TokenResponse>> GenerateTokensAsync(UserDto userDto)
+        public async Task<ServiceResponse<TokenResponse>> GenerateTokensAsync(AuthDto userDto)
         {
             var tokenResponse = new TokenResponse();
 
@@ -119,7 +119,7 @@ namespace BloodHub.Api.Services
             var roles = await _userManager.GetRolesAsync(user);
 
             // Tạo UserDto
-            var userDto = new UserDto
+            var userDto = new AuthDto
             {
                 Id = user.Id,
                 Username = user.UserName!,

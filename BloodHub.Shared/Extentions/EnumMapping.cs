@@ -66,6 +66,25 @@
         };
     }
 
+    public static class ShiftStatusMapping
+    {
+        public static readonly Dictionary<ShiftStatus, string> EnumToStringMap = new Dictionary<ShiftStatus, string>
+        {
+            { ShiftStatus.Pending, "Chờ nhận ca" },
+            { ShiftStatus.InProgress, "Đang trực" },
+            { ShiftStatus.Transferred, "Đã bàn giao ca" },
+            { ShiftStatus.Completed, "Hoàn thành ca trực" }
+        };
+
+        public static readonly Dictionary<string, ShiftStatus> StringToEnumMap = new Dictionary<string, ShiftStatus>
+        {
+            { "Chờ nhận ca", ShiftStatus.Pending },
+            { "Đang trực", ShiftStatus.InProgress },
+            { "Đã bàn giao ca", ShiftStatus.Transferred },
+            { "Hoàn thành ca trực", ShiftStatus.Completed }
+        };
+    }
+
     #endregion
 
     #region Color mapping

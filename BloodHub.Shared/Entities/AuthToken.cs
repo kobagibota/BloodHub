@@ -1,7 +1,5 @@
 ﻿using BloodHub.Shared.Extentions;
-using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.Metrics;
 
 namespace BloodHub.Shared.Entities
 {

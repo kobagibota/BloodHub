@@ -8,7 +8,7 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="form" Model="@Ward" OnValidSubmit="OnValidSubmit" Spacing="3">
-            <MudTextField @bind-Value="Ward.WardName" Label="Tên khoa phòng" Required="true" FullWidth="true" @ref="wardNameInput" />
+            <MudTextField @bind-Value="Ward.WardName" Label="Tên khoa phòng" Required="true" FullWidth="true" @ref="wardNameInput" Variant="Variant.Outlined" />
         </MudForm>
     </DialogContent>
 

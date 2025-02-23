@@ -20,13 +20,14 @@
         public static class DoctorEndpoints
         {
             public const string GetAll = "api/doctor";
+            public const string GetAct = "api/doctor/getact";
             public const string GetById = "api/doctor/getbyid";
             public const string Create = "api/doctor/create";
             public const string Update = "api/doctor/update";
             public const string Delete = "api/doctor/delete";
         }
 
-        // Endpoint Doctor
+        // Endpoint Nursing
         public static class NursingEndpoints
         {
             public const string GetAll = "api/nursing";
@@ -46,7 +47,7 @@
             public const string Delete = "api/ward/delete";
         }
 
-        // Endpoint Ward
+        // Endpoint Product
         public static class ProductEndpoints
         {
             public const string GetAll = "api/product";
@@ -75,6 +76,30 @@
             public const string Create = "api/order/create";
             public const string Update = "api/order/update";
             public const string Delete = "api/order/delete";
+        }
+
+        // Endpoint Shift
+        public static class ShiftEndpoints
+        {
+            public const string GetAll = "api/shift";
+            public const string GetById = "api/shift/getbyid";
+            public const string ShiftHandover = "api/shift/handover";
+            public const string ShiftConfirmHandover = "api/shift/confirmhandover";
+            public const string Create = "api/shift/create";
+            public const string Update = "api/shift/update";
+            public const string Delete = "api/shift/delete";
+        }
+
+        // Endpoint Shift
+        public static class UserEndpoints
+        {
+            public const string GetAll = "api/user";
+            public const string GetById = "api/user/getbyid";
+            public const string Create = "api/user/create";
+            public const string Update = "api/user/update";
+            public const string ToggleActive = "api/user/toggle-active";
+            public const string Delete = "api/user/delete";
+            public const string GetAvailableUsersForShifts = "api/user/available-users-for-shift";
         }
     }
 }

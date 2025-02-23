@@ -12,8 +12,9 @@ namespace BloodHub.Data.Data
 
         #region Entities
 
-        public DbSet<AuthToken> AuthTokens { get; set; }
-        public DbSet<ActivityLog> ActitityLogs { get; set; }
+        public DbSet<AuthToken> AuthTokens { get; set; } = null!;
+
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
         public DbSet<ChangeLog> ChangeLogs { get; set; }
 
         public DbSet<Crossmatch> Crossmatches { get; set; }
@@ -34,22 +35,37 @@ namespace BloodHub.Data.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            base.OnModelCreating(builder);
+
             #region Configure using Fluent API
+
+            // Bỏ hoàn toàn bảng AspNetUserTokens, AspNetUserRoles
+            // builder.Ignore<IdentityUserToken<int>>();
 
             // Cấu hình khóa chính cho các thực thể Identity
             builder.Entity<IdentityUserLogin<int>>().HasKey(l => new { l.LoginProvider, l.ProviderKey }); 
-            builder.Entity<IdentityRoleClaim<int>>().HasKey(rc => rc.Id); 
-            builder.Entity<IdentityUserRole<int>>().HasKey(ur => new { ur.UserId, ur.RoleId });
-            builder.Entity<IdentityUserToken<int>>().HasKey(ut => new { ut.UserId, ut.LoginProvider, ut.Name });
+            builder.Entity<IdentityRoleClaim<int>>().HasKey(rc => rc.Id);
+            // Cấu hình UserRole
+            //builder.Entity<UserRole>().HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            builder.Entity<UserRole>().HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserId).OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            builder.Entity<UserRole>().HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId).OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
 
             // Cấu hình các thực thể Identity với tên bảng tùy chỉnh
-            builder.Entity<IdentityUser<int>>().ToTable("AppUsers"); 
-            builder.Entity<IdentityRole<int>>().ToTable("AppRoles"); 
-            builder.Entity<IdentityUserRole<int>>().ToTable("AppUserRoles"); 
+            builder.Entity<User>().ToTable("AppUsers"); 
+            builder.Entity<Role>().ToTable("AppRoles");
+            builder.Entity<UserRole>().ToTable("AppUserRoles");
             builder.Entity<IdentityUserClaim<int>>().ToTable("AppUserClaims"); 
             builder.Entity<IdentityUserLogin<int>>().ToTable("AppUserLogins"); 
             builder.Entity<IdentityRoleClaim<int>>().ToTable("AppRoleClaims");
-            builder.Entity<IdentityUserToken<int>>().ToTable("UserTokens"); 
+            builder.Entity<AuthToken>().ToTable("AuthTokens");
 
             builder.ApplyConfiguration(new ActivityLogConfiguration());
             builder.ApplyConfiguration(new ChangeLogConfiguration());

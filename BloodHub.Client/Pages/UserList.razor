@@ -1,0 +1,193 @@
+﻿@page "/users"
+@attribute [Authorize]
+
+@using BloodHub.Client.Components
+@using BloodHub.Client.Services
+@using BloodHub.Shared.DTOs
+@using BloodHub.Shared.Entities
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject UserService UserService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Danh sách người dùng</PageTitle>
+
+<RoleAuthorizeView Roles="Manager,Admin"> 
+    <MudPaper Class="m-2" Elevation="3" >
+        <MudTable Items="users" FixedHeader="true" Dense="true" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
+                  Filter="new Func<UserDto,bool>(FilterFunc)" @bind-SelectedItem="selectedItem" HorizontalScrollbar="true" >
+            <ToolBarContent>
+                <MudText Typo="Typo.h4" Class="mb-2">Danh sách người dùng</MudText>
+
+                <MudSpacer />
+
+                <MudTextField @bind-Value="searchString" Placeholder="Tìm kiếm"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                              AdornmentColor="Color.Secondary" IconSize="Size.Medium"
+                              Class="mt-0" Style="margin-right: 12px;" Disabled="@isLoading" />
+
+                <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                           Color="Color.Info" OnClick="@(() => OpenUserDialog(new UserDto()))"
+                           Size="Size.Medium" Disabled="@isLoading">
+                    Thêm mới
+                </MudButton>            
+            </ToolBarContent>
+
+            <ColGroup>
+                <col style="width: 20%; min-width:150px;" />
+                <col style="width: 30%; min-width:150px;" />
+                <col style="width: 10%; min-width:100px;" />
+                <col style="width: 30%; min-width:100px;" />
+                <col style="width: 10%; min-width:50px;" />
+            </ColGroup>
+
+            <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<UserDto, object>(x => x.UserName)">Tên đăng nhập</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<UserDto, object>(x => x.FullName)">Họ và tên</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="text-align:center">Trạng thái</MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<UserDto, object>(x => x.Roles)">Vai trò</MudTableSortLabel>
+                </MudTh>
+                <MudTh Style="text-align:center">Hành động</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="Tên đăng nhập">@context.UserName</MudTd>
+                <MudTd DataLabel="Họ và tên">@context.FullName</MudTd>
+
+                <MudTd DataLabel="Trạng thái" Style="text-align:center ; display: flex; justify-content: center; align-items: center;">
+                    <MudSwitch @bind-Value="context.IsActive" Color="Color.Success" onclick="@(async () => await ToggleUserStatus(context.Id))" />
+                </MudTd>
+
+                <MudTd DataLabel="Vai trò">
+                    @foreach (var role in context.Roles)
+                    {
+                        <MudChip T="string" Variant="Variant.Text" Color="Color.Primary">@role</MudChip>
+                    }
+                </MudTd>
+
+                <MudTd Style="text-align:center" DataLabel="Hành động">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" Disabled="@(isLoading)" OnClick="@(() => OpenUserDialog(context))">Sửa</MudIconButton>
+
+                    <!-- Delete Button -->
+                    <AuthorizeView Roles="Admin">
+                        <Authorized Context="authContext">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" Disabled="@(isLoading)" OnClick="@(() => ConfirmDeleteUser(context))">Xóa</MudIconButton>
+                        </Authorized>
+                    </AuthorizeView>
+                </MudTd>
+            </RowTemplate>
+
+            <NoRecordsContent>
+                <MudPaper Elevation="2" Class="pa-4 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Large" />
+                    <MudText Typo="Typo.h6" Class="mt-2">Không có dữ liệu</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Hãy kiểm tra lại bộ lọc hoặc thêm dữ liệu mới.</MudText>
+                </MudPaper>
+            </NoRecordsContent>
+
+            <LoadingContent>
+                <MudContainer Class="text-center">
+                    <MudText Typo="Typo.h6" Class="mt-2">Đang tải dữ liệu...</MudText>
+                </MudContainer>
+            </LoadingContent>
+
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100, int.MaxValue }" RowsPerPageString="Mỗi trang" AllItemsText="Tất cả" />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</RoleAuthorizeView>
+
+@code {
+    private List<UserDto> users = new List<UserDto>();
+    private UserDto selectedItem = new UserDto();
+    private string searchString = "";
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private bool FilterFunc(UserDto element) => FilterFunc(element, searchString);
+
+    private bool FilterFunc(UserDto element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.FullName != null && element.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private async Task OpenUserDialog(UserDto user)
+    {
+        var parameters = new DialogParameters { { "User", user ?? new UserDto() } };
+        var dialog = DialogService.Show<UserDialog>(user == null ? "Thêm mới người dùng" : "Chỉnh sửa người dùng", parameters);
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled) await LoadUsers();
+    }
+
+    private async Task ConfirmDeleteUser(UserDto user)
+    {
+        var parameters = new DialogParameters { { "ContentText", $"Bạn có chắc chắn muốn xóa '{user.UserName}'?" } };
+        var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
+        var result = await dialog.Result;
+        if (result?.Canceled == false)
+        {
+            var response = await UserService.DeleteUser(user.Id);
+            if (response.Success) 
+            {
+                await LoadUsers();
+            }
+            else
+            {
+                await DialogService.ShowMessageBox("Lỗi", response.Message);
+            }
+        }
+    }
+
+    private async Task ToggleUserStatus(int userId)
+    {
+        var response = await UserService.ToggleActive(userId);
+        if (!response.Success)
+        {
+            await DialogService.ShowMessageBox("Lỗi", response.Message);
+        }
+        else
+        {
+            Snackbar.Add("Cập nhật trạng thái thành công!", Severity.Success);
+        }
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await UserService.GetAllUsers();
+            if (response.Success && response.Data != null)
+            {
+                users = response.Data;
+            }
+            else 
+            { 
+                await DialogService.ShowMessageBox("Lỗi", response.Message); 
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

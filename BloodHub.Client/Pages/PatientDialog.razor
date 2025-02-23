@@ -9,45 +9,69 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="form" Model="@Patient" OnValidSubmit="OnValidSubmit" Spacing="3">
-            <MudTextField Label="Mã y tế" @bind-Value="Patient.MedicalId" FullWidth="true"
+            <MudTextField Label="Mã y tế" @bind-Value="Patient.MedicalId" FullWidth="true" Variant="Variant.Outlined"
                           Mask="@(new PatternMask("0000000000"))" @ref="medicalInput" />
 
-            <!-- Họ và tên -->
-            <MudTextField Label="Họ và tên" @bind-Value="Patient.PatientName" Required="true"
-                          RequiredError="Bạn chưa nhập tên bệnh nhân" FullWidth="true" Style="text-transform: uppercase;" />
+            <MudGrid Spacing="1">
+                <MudItem xs="12">
+                    <!-- Họ và tên -->
+                    <MudTextField Label="Họ và tên"
+                                  @bind-Value="Patient.PatientName"
+                                  Required="true"
+                                  Variant="Variant.Outlined"
+                                  RequiredError="Bạn chưa nhập tên bệnh nhân"
+                                  FullWidth="true"
+                                  @onblur="(e) => Patient.PatientName = Patient.PatientName.ToUpper()" />
+                </MudItem>
 
-            <!-- Ngày sinh -->
-            <MudDatePicker Label="Ngày sinh" @bind-Date="selectDOB" DateFormat="dd/MM/yyyy"
-                           Required="true" RequiredError="Ngày sinh không được để trống" />
+                <MudItem xs="12">
+                    <!-- Ngày sinh -->
+                    <MudDatePicker Label="Ngày sinh" @bind-Date="selectDOB" DateFormat="dd/MM/yyyy" Variant="Variant.Outlined"
+                                   Required="true" RequiredError="Ngày sinh không được để trống" />
+                </MudItem>
 
-            <MudText>Tuổi: @Patient.Age</MudText>
+                <MudItem xs="6">
+                    <MudTextField Label="Tuổi" Value="Patient.Age" Variant="Variant.Outlined" ReadOnly="true" />
+                </MudItem>
 
-            <!-- Giới tính -->
-            <MudSelect @bind-Value="Patient.Gender" Label="Giới tính" Required="true" FullWidth="true">
-                @foreach (var gender in GenderMapping.EnumToStringMap.Values)
-                {
-                    <MudSelectItem Value="@GenderMapping.StringToEnumMap[gender]">@gender</MudSelectItem>
-                }
-            </MudSelect>
+                <MudItem xs="6">
+                    <!-- Giới tính -->
+                    <MudSelect @bind-Value="Patient.Gender" Label="Giới tính" Required="true" FullWidth="true" Variant="Variant.Outlined">
+                        @foreach (var gender in GenderMapping.EnumToStringMap.Values)
+                        {
+                            <MudSelectItem Value="@GenderMapping.StringToEnumMap[gender]">@gender</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
 
-            <!-- Địa chỉ -->
-            <MudTextField @bind-Value="Patient.Address" Label="Địa chỉ" />
+                <MudItem xs="12">
+                    <!-- Địa chỉ -->
+                    <MudTextField @bind-Value="Patient.Address" Label="Địa chỉ" Variant="Variant.Outlined" />
+                </MudItem>
 
-            <!-- Nhóm máu -->
-            <MudSelect @bind-Value="Patient.BloodGroup" Label="Nhóm máu" Required="true" FullWidth="true">
-                @foreach (var bloodGroup in Enum.GetValues<BloodGroup>())
-                {
-                    <MudSelectItem Value="@bloodGroup">@bloodGroup</MudSelectItem>
-                }
-            </MudSelect>
+                <MudItem xs="6">
+                    <!-- Nhóm máu -->
+                    <MudSelect @bind-Value="Patient.BloodGroup" Label="Nhóm máu" Required="true"
+                               Variant="Variant.Outlined">
+                        @foreach (var bloodGroup in Enum.GetValues<BloodGroup>())
+                        {
+                            <MudSelectItem Value="@bloodGroup">
+                                @bloodGroup
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
 
-            <!-- Nhóm máu hệ Rhesus -->
-            <MudSelect @bind-Value="Patient.Rhesus" Label="Nhóm máu hệ Rhesus" Required="true" FullWidth="true">
-                @foreach (var rhesus in RhesusMapping.EnumToStringMap.Values)
-                {
-                    <MudSelectItem Value="@RhesusMapping.StringToEnumMap[rhesus]">@rhesus</MudSelectItem>
-                }
-            </MudSelect>
+                <MudItem xs="6">
+                    <!-- Nhóm máu hệ Rhesus -->
+                    <MudSelect @bind-Value="Patient.Rhesus" Label="Nhóm máu hệ Rhesus" Required="true" FullWidth="true" Variant="Variant.Outlined">
+                        @foreach (var rhesus in RhesusMapping.EnumToStringMap.Values)
+                        {
+                            <MudSelectItem Value="@RhesusMapping.StringToEnumMap[rhesus]">@rhesus</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
         </MudForm>
     </DialogContent>
 
@@ -72,13 +96,19 @@
 
     [Parameter] public Patient Patient { get; set; } = new Patient();
 
+    private string PatientName
+    {
+        get => Patient.PatientName;
+        set => Patient.PatientName = value?.ToUpper() ?? string.Empty;
+    }
+
     private Patient originalPatient = new Patient();
     private MudForm? form;
     private bool isLoading = false;
     private MudTextField<string?>? medicalInput;
     private DateTime? selectDOB
     {
-        get => Patient.DateOfBirth;
+        get => Patient.DateOfBirth == DateTime.MinValue ? DateTime.Now : Patient.DateOfBirth;
         set
         {
             if (value.HasValue)
@@ -105,7 +135,7 @@
         }
         else
         {
-            Patient = new Patient();
+            Patient = new Patient() { DateOfBirth = DateTime.Now };
         }
     }
 

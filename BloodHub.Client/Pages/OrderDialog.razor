@@ -14,7 +14,7 @@
     <DialogContent>
         <MudGrid Spacing="1">
             <MudItem xs="12">
-                <MudText>Tên bệnh nhân: <strong>@Patient.PatientName</strong></MudText>
+                <MudText>Tên bệnh nhân: <strong class="mud-error-text">@Patient.PatientName.ToUpper()</strong></MudText>
             </MudItem>
 
             <MudItem xs="6">
@@ -36,26 +36,26 @@
             <MudGrid Spacing="1">
                 <MudItem xs="12">
                     <MudAutocomplete T="Doctor" Label="Bác sĩ chỉ định"
-                                     @bind-Value="SelectedDoctor"
-                                     Variant="Variant.Outlined"
-                                     Required="true"
-                                     SearchFunc="SearchDoctors"
-                                     ToStringFunc="@(doctor => doctor.DoctorName)"
-                                     Clearable="true"
-                                     Placeholder="Chọn bác sĩ chỉ định..."
-                                     ShowProgressIndicator="true" ProgressIndicatorColor="Color.Primary" />
+                    @bind-Value="SelectedDoctor"
+                    Variant="Variant.Outlined"
+                    Required="true"
+                    SearchFunc="SearchDoctors"
+                    ToStringFunc="@(doctor => doctor.DoctorName)"
+                    Clearable="true"
+                    Placeholder="Chọn bác sĩ chỉ định..."
+                    ShowProgressIndicator="true" ProgressIndicatorColor="Color.Primary" />
                 </MudItem>
 
                 <MudItem xs="12">
                     <MudAutocomplete T="Ward" Label="Khoa"
-                                     @bind-Value="SelectedWard"
-                                     Variant="Variant.Outlined"
-                                     Required="true"
-                                     SearchFunc="SearchWards"
-                                     ToStringFunc="@(ward => ward.WardName)"
-                                     Clearable="true"
-                                     Placeholder="Chọn khoa..."
-                                     ShowProgressIndicator="true" ProgressIndicatorColor="Color.Primary" />
+                    @bind-Value="SelectedWard"
+                    Variant="Variant.Outlined"
+                    Required="true"
+                    SearchFunc="SearchWards"
+                    ToStringFunc="@(ward => ward.WardName)"
+                    Clearable="true"
+                    Placeholder="Chọn khoa..."
+                    ShowProgressIndicator="true" ProgressIndicatorColor="Color.Primary" />
                 </MudItem>
                 <MudItem xs="6">
                     <MudTextField Label="Phòng" @bind-Value="Order.Room" Variant="Variant.Outlined" />
@@ -104,7 +104,7 @@
 
     private DateTime? selectOrderDate
     {
-        get => Order.OrderDate;
+        get => Order.OrderDate == DateTime.MinValue ? DateTime.Now : Order.OrderDate;
         set
         {
             if (value.HasValue)
@@ -116,7 +116,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var doctors = await DoctorService.GetAllDoctors();
+        var doctors = Order.Id != 0 ? await DoctorService.GetAllDoctors() : await DoctorService.GetActDoctors();
         DoctorList = (doctors.Success && doctors.Data != null) ? doctors.Data : new List<Doctor>();
 
         var wards = await WardService.GetAllWards();
@@ -136,11 +136,7 @@
 
             SelectedDoctor = DoctorList.FirstOrDefault(d => d.Id == Order.DoctorId) ?? new Doctor();
 
-            SelectedWard = WardList.FirstOrDefault(d => d.Id == Order.DoctorId) ?? new Ward();
-        }
-        else
-        {
-            Order = new OrderDto() { OrderDate = DateTime.Now };
+            SelectedWard = WardList.FirstOrDefault(d => d.Id == Order.WardId) ?? new Ward();
         }
     }
 

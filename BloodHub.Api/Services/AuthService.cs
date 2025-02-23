@@ -32,6 +32,13 @@ namespace BloodHub.Api.Services
 
         #endregion Private properties
 
+
+        //RegisterAsync(UserRegisterRequest request) – Đăng ký user mới.
+        //LoginAsync(LoginRequest request) – Đăng nhập & tạo JWT Token.
+        //RefreshTokenAsync(string refreshToken) – Cấp lại access token.
+        //ChangePasswordAsync(ChangePasswordRequest request) – Đổi mật khẩu.
+        //AssignRolesAsync(int userId, List<string> roles) – Gán vai trò cho user.
+
         #region Methods
 
         public async Task<ServiceResponse<TokenResponse>> LoginAsync(LoginDto loginDto)
@@ -58,7 +65,7 @@ namespace BloodHub.Api.Services
                 await _signInManager.SignInAsync(user, isPersistent: false);
 
                 var roles = await _userManager.GetRolesAsync(user);
-                var userDto = user.ConvertToDto(roles);
+                var userDto = user.ConvertToAuthDto(roles);
 
                 // Tạo Access Token và Refresh Token
                 var tokenResponse = await _authTokenService.GenerateTokensAsync(userDto);

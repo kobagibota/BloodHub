@@ -1,6 +1,7 @@
 ﻿using BloodHub.Data.Data;
 using BloodHub.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using System.Linq.Expressions;
 
 namespace BloodHub.Data.Repositories
@@ -71,6 +72,23 @@ namespace BloodHub.Data.Repositories
             return await query.ToListAsync();
         }
 
+        public async Task<T?> GetByIdAsync(int id)
+        {
+            return await _entitySet.FindAsync(id);
+        }
+
+        public async Task<T?> GetFirstOrDefaultAsync(Expression<Func<T, bool>> filter, params Expression<Func<T, object>>[] include)
+        {
+            IQueryable<T> query = _entitySet.Where(filter);
+
+            // Bao gồm các bảng liên quan
+            foreach (var includeExpression in include)
+            {
+                query = query.Include(includeExpression);
+            }
+
+            return await query.FirstOrDefaultAsync();
+        }
 
         public void Remove(T entity)
         {
@@ -92,14 +110,26 @@ namespace BloodHub.Data.Repositories
             _dbContext.UpdateRange(entities);
         }
 
-        public async Task<T?> GetByIdAsync(int id)
-        {
-            return await _entitySet.FindAsync(id);
-        }
-
         protected async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate) 
         { 
             return await _entitySet.AnyAsync(predicate); 
+        }
+
+        public async Task<IEnumerable<T>> GetAsync(Expression<Func<T, bool>>? filter = null, Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null)
+        {
+            IQueryable<T> query = _entitySet;
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            if (include != null)
+            {
+                query = include(query);
+            }
+
+            return await query.ToListAsync();
         }
 
         #endregion

@@ -55,8 +55,24 @@ builder.Services.AddIdentity<User, Role>(options =>
     options.User.RequireUniqueEmail = false;
     options.SignIn.RequireConfirmedEmail = false; 
 })
+    .AddRoles<Role>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
+
+// Settings for Password & Lockout
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 4;
+
+    // Settings for Lockout (lockout for after 5 minutes)
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+});
 
 // Settings Authentication and Authorization
 builder.Services.AddAuthorizationPolicies();
@@ -77,6 +93,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAuthTokenService, AuthTokenService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<RoleManager<Role>>();
 
 builder.Services.AddScoped<IChangeLogService, ChangeLogService>();      // Log
 builder.Services.AddScoped<RequestInfoProvider>();                      // RequestInfoProvider get UserId, IPAddress, UserAgent from Token
@@ -87,6 +105,9 @@ builder.Services.AddScoped<IWardService, WardService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<IShiftDetailService, ShiftDetailService>();
+
 
 var app = builder.Build();
 

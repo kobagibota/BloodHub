@@ -61,7 +61,7 @@ namespace BloodHub.Data.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ActitityLogs");
+                    b.ToTable("ActivityLogs");
                 });
 
             modelBuilder.Entity("BloodHub.Shared.Entities.AuthToken", b =>
@@ -106,7 +106,7 @@ namespace BloodHub.Data.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuthTokens");
+                    b.ToTable("AuthTokens", (string)null);
                 });
 
             modelBuilder.Entity("BloodHub.Shared.Entities.ChangeLog", b =>
@@ -398,6 +398,56 @@ namespace BloodHub.Data.Data.Migrations
                     b.ToTable("Products");
                 });
 
+            modelBuilder.Entity("BloodHub.Shared.Entities.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AppRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Manager",
+                            NormalizedName = "MANAGER"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "User",
+                            NormalizedName = "USER"
+                        });
+                });
+
             modelBuilder.Entity("BloodHub.Shared.Entities.Shift", b =>
                 {
                     b.Property<int>("Id")
@@ -406,23 +456,23 @@ namespace BloodHub.Data.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("HandBy")
+                    b.Property<int?>("HandBy")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("HandoverTime")
+                    b.Property<DateTime?>("HandoverTime")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Note")
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
-                    b.Property<int>("ReceivedBy")
+                    b.Property<int?>("ReceivedBy")
                         .HasColumnType("int");
 
-                    b.Property<int>("ReceivedShiftId")
+                    b.Property<int?>("ReceivedShiftId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("ShiftEnd")
+                    b.Property<DateTime?>("ShiftEnd")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ShiftName")
@@ -589,6 +639,152 @@ namespace BloodHub.Data.Data.Migrations
                     b.ToTable("TransactionDetails");
                 });
 
+            modelBuilder.Entity("BloodHub.Shared.Entities.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContactInfo")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GetDate()");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("UserName")
+                        .IsUnique()
+                        .HasFilter("[UserName] IS NOT NULL");
+
+                    b.ToTable("AppUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "6cb530a0-88e5-4c39-9115-331626a8f4f3",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "superadmin@khotruyenmau.com",
+                            EmailConfirmed = true,
+                            FullName = "Quản trị hệ thống",
+                            IsActive = true,
+                            LockoutEnabled = false,
+                            NormalizedUserName = "SUPERADMIN",
+                            PasswordHash = "AQAAAAIAAYagAAAAEBlfe5KIouxulxpZ69s1QhXrzA6CWSdRnLEix7kPuSQlKH5dj0qWo/CmvvDoo9Y5eQ==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "9b91917e-fe6a-4499-89b0-ae0fd2019a61",
+                            TwoFactorEnabled = false,
+                            UserName = "superadmin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "3c507b9e-7862-4118-b380-3ca9d20ea290",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "admin@khotruyenmau.com",
+                            EmailConfirmed = true,
+                            FullName = "Quản trị hệ thống",
+                            IsActive = true,
+                            LockoutEnabled = false,
+                            NormalizedUserName = "ADMIN",
+                            PasswordHash = "AQAAAAIAAYagAAAAELA7fRR1cNGoqpBIrI+6A3v+fcI+1AmheNQcEfp+4susqvaz1J49hejzzUpSgvIpDQ==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "1ae641aa-8f91-4731-9511-55a27befc82e",
+                            TwoFactorEnabled = false,
+                            UserName = "admin"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "01abbe21-2e11-40c7-9a6b-f0474a639313",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "staff@khotruyenmau.com",
+                            EmailConfirmed = true,
+                            FullName = "Nhân viên",
+                            IsActive = true,
+                            LockoutEnabled = false,
+                            NormalizedUserName = "STAFF",
+                            PasswordHash = "AQAAAAIAAYagAAAAEMdeI6tsg02VgZhg8JIIhaRy2cOK/xWMgTp/KEeoezbMukM3eVKZXzRszxWKJPfEzg==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "5b969213-e3ce-45b1-818d-de0c19c6d99e",
+                            TwoFactorEnabled = false,
+                            UserName = "staff"
+                        });
+                });
+
             modelBuilder.Entity("BloodHub.Shared.Entities.Ward", b =>
                 {
                     b.Property<int>("Id")
@@ -605,37 +801,6 @@ namespace BloodHub.Data.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Wards");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AppRoles", (string)null);
-
-                    b.HasDiscriminator().HasValue("IdentityRole<int>");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -657,72 +822,9 @@ namespace BloodHub.Data.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("RoleId");
+
                     b.ToTable("AppRoleClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser<int>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("UserName")
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(900)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AppUsers", (string)null);
-
-                    b.HasDiscriminator().HasValue("IdentityUser<int>");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
@@ -744,6 +846,8 @@ namespace BloodHub.Data.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("AppUserClaims", (string)null);
                 });
 
@@ -763,6 +867,8 @@ namespace BloodHub.Data.Data.Migrations
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("AppUserLogins", (string)null);
                 });
 
@@ -776,24 +882,9 @@ namespace BloodHub.Data.Data.Migrations
 
                     b.HasKey("UserId", "RoleId");
 
-                    b.ToTable("AppUserRoles", (string)null);
+                    b.ToTable("AspNetUserRoles", (string)null);
 
-                    b.HasData(
-                        new
-                        {
-                            UserId = 1,
-                            RoleId = 1
-                        },
-                        new
-                        {
-                            UserId = 2,
-                            RoleId = 2
-                        },
-                        new
-                        {
-                            UserId = 3,
-                            RoleId = 3
-                        });
+                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
@@ -812,117 +903,32 @@ namespace BloodHub.Data.Data.Migrations
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("UserTokens", (string)null);
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("BloodHub.Shared.Entities.Role", b =>
+            modelBuilder.Entity("BloodHub.Shared.Entities.UserRole", b =>
                 {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityRole<int>");
+                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUserRole<int>");
 
-                    b.HasDiscriminator().HasValue("Role");
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AppUserRoles", (string)null);
 
                     b.HasData(
                         new
                         {
-                            Id = 1,
-                            Name = "Admin",
-                            NormalizedName = "ADMIN"
+                            UserId = 1,
+                            RoleId = 1
                         },
                         new
                         {
-                            Id = 2,
-                            Name = "Manager",
-                            NormalizedName = "MANAGER"
+                            UserId = 2,
+                            RoleId = 2
                         },
                         new
                         {
-                            Id = 3,
-                            Name = "User",
-                            NormalizedName = "USER"
-                        });
-                });
-
-            modelBuilder.Entity("BloodHub.Shared.Entities.User", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser<int>");
-
-                    b.Property<string>("ContactInfo")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GetDate()");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.HasIndex("UserName")
-                        .IsUnique()
-                        .HasFilter("[UserName] IS NOT NULL");
-
-                    b.HasDiscriminator().HasValue("User");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "244eab60-fa09-4b5a-ad3f-70d360847cb0",
-                            Email = "superadmin@khotruyenmau.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedUserName = "SUPERADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDV0sVoILvbwM16LLf3gChByYbsNE4LuRVPz1qhUsxkXJpxkx9YK/LRnG5W00Xo9EA==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "dcad200a-f958-46cf-927a-5438c3d284eb",
-                            TwoFactorEnabled = false,
-                            UserName = "superadmin",
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FullName = "Quản trị hệ thống",
-                            IsActive = false
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "775d9052-824f-47f9-bc55-5493460d06e6",
-                            Email = "admin@khotruyenmau.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEF45Oqlm6ttHhpHE5JPa0i+cGrv+7QOnUY+Nlgp4FACrfHuB7a90qrMT6Ffx21Gd9A==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "90a83419-6060-4802-9f16-81ba8473ba10",
-                            TwoFactorEnabled = false,
-                            UserName = "admin",
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FullName = "Quản trị hệ thống",
-                            IsActive = false
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "97faa074-a81f-4e8c-9e2f-eaa867c10071",
-                            Email = "staff@khotruyenmau.com",
-                            EmailConfirmed = true,
-                            LockoutEnabled = false,
-                            NormalizedUserName = "STAFF",
-                            PasswordHash = "AQAAAAIAAYagAAAAEPeXpM9n0RMmCVYs/eR5bqSv7B8ZMhVID0GV8MLNaUlR0XMlVuG5+kamQBCoQVRtCQ==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "43023238-f9d9-4dfa-a3f0-b42e4b49301b",
-                            TwoFactorEnabled = false,
-                            UserName = "staff",
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            FullName = "Nhân viên",
-                            IsActive = false
+                            UserId = 3,
+                            RoleId = 3
                         });
                 });
 
@@ -1029,20 +1035,17 @@ namespace BloodHub.Data.Data.Migrations
                     b.HasOne("BloodHub.Shared.Entities.User", "UserHand")
                         .WithMany("ShiftsHanded")
                         .HasForeignKey("HandBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BloodHub.Shared.Entities.User", "UserReceived")
                         .WithMany("ShiftsReceived")
                         .HasForeignKey("ReceivedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BloodHub.Shared.Entities.Shift", "ReceivedShift")
                         .WithMany()
                         .HasForeignKey("ReceivedShiftId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("BloodHub.Shared.Entities.User", null)
                         .WithMany("Shifts")
@@ -1147,6 +1150,67 @@ namespace BloodHub.Data.Data.Migrations
                     b.Navigation("Transaction");
                 });
 
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
+                {
+                    b.HasOne("BloodHub.Shared.Entities.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
+                {
+                    b.HasOne("BloodHub.Shared.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
+                {
+                    b.HasOne("BloodHub.Shared.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
+                {
+                    b.HasOne("BloodHub.Shared.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("BloodHub.Shared.Entities.UserRole", b =>
+                {
+                    b.HasOne("BloodHub.Shared.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BloodHub.Shared.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", null)
+                        .WithOne()
+                        .HasForeignKey("BloodHub.Shared.Entities.UserRole", "UserId", "RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BloodHub.Shared.Entities.Crossmatch", b =>
                 {
                     b.Navigation("Transactions");
@@ -1186,6 +1250,11 @@ namespace BloodHub.Data.Data.Migrations
                     b.Navigation("ShiftDetails");
                 });
 
+            modelBuilder.Entity("BloodHub.Shared.Entities.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
             modelBuilder.Entity("BloodHub.Shared.Entities.Shift", b =>
                 {
                     b.Navigation("ShiftDetails");
@@ -1198,11 +1267,6 @@ namespace BloodHub.Data.Data.Migrations
             modelBuilder.Entity("BloodHub.Shared.Entities.Transaction", b =>
                 {
                     b.Navigation("TransactionDetails");
-                });
-
-            modelBuilder.Entity("BloodHub.Shared.Entities.Ward", b =>
-                {
-                    b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("BloodHub.Shared.Entities.User", b =>
@@ -1220,6 +1284,13 @@ namespace BloodHub.Data.Data.Migrations
                     b.Navigation("ShiftsReceived");
 
                     b.Navigation("Transactions");
+
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("BloodHub.Shared.Entities.Ward", b =>
+                {
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

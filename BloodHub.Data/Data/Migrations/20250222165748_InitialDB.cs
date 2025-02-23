@@ -14,75 +14,18 @@ namespace BloodHub.Data.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "AppRoleClaims",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<int>(type: "int", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AppRoleClaims", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AppRoles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NormalizedName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Discriminator = table.Column<string>(type: "nvarchar(21)", maxLength: 21, nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AppRoles", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AppUserClaims",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AppUserClaims", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AppUserLogins",
-                columns: table => new
-                {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AppUserLogins", x => new { x.LoginProvider, x.ProviderKey });
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AppUserRoles",
-                columns: table => new
-                {
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    RoleId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AppUserRoles", x => new { x.UserId, x.RoleId });
                 });
 
             migrationBuilder.CreateTable(
@@ -91,10 +34,14 @@ namespace BloodHub.Data.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserName = table.Column<string>(type: "varchar(900)", unicode: false, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    FullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    ContactInfo = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GetDate()"),
+                    UserName = table.Column<string>(type: "varchar(256)", unicode: false, maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -104,12 +51,7 @@ namespace BloodHub.Data.Data.Migrations
                     TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "int", nullable: false),
-                    Discriminator = table.Column<string>(type: "nvarchar(21)", maxLength: 21, nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: true),
-                    ContactInfo = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true, defaultValueSql: "GetDate()")
+                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -178,20 +120,6 @@ namespace BloodHub.Data.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserTokens",
-                columns: table => new
-                {
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Wards",
                 columns: table => new
                 {
@@ -205,7 +133,28 @@ namespace BloodHub.Data.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ActitityLogs",
+                name: "AppRoleClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RoleId = table.Column<int>(type: "int", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppRoleClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AppRoleClaims_AppRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AppRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ActivityLogs",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -219,9 +168,94 @@ namespace BloodHub.Data.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ActitityLogs", x => x.Id);
+                    table.PrimaryKey("PK_ActivityLogs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ActitityLogs_AppUsers_UserId",
+                        name: "FK_ActivityLogs_AppUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AppUserClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppUserClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AppUserClaims_AppUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AppUserLogins",
+                columns: table => new
+                {
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppUserLogins", x => new { x.LoginProvider, x.ProviderKey });
+                    table.ForeignKey(
+                        name: "FK_AppUserLogins_AppUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserRoles",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    RoleId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AppRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AppRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AspNetUserRoles_AppUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AspNetUserTokens",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
+                    table.ForeignKey(
+                        name: "FK_AspNetUserTokens_AppUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AppUsers",
                         principalColumn: "Id",
@@ -288,11 +322,11 @@ namespace BloodHub.Data.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ShiftName = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
                     ShiftStart = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ShiftEnd = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    HandoverTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReceivedShiftId = table.Column<int>(type: "int", nullable: false),
-                    HandBy = table.Column<int>(type: "int", nullable: false),
-                    ReceivedBy = table.Column<int>(type: "int", nullable: false),
+                    ShiftEnd = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    HandoverTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReceivedShiftId = table.Column<int>(type: "int", nullable: true),
+                    HandBy = table.Column<int>(type: "int", nullable: true),
+                    ReceivedBy = table.Column<int>(type: "int", nullable: true),
                     Note = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
                     Status = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: true)
@@ -384,6 +418,36 @@ namespace BloodHub.Data.Data.Migrations
                         column: x => x.WardId,
                         principalTable: "Wards",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AppUserRoles",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    RoleId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AppUserRoles", x => new { x.UserId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_AppUserRoles_AppRoles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "AppRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AppUserRoles_AppUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AppUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AppUserRoles_AspNetUserRoles_UserId_RoleId",
+                        columns: x => new { x.UserId, x.RoleId },
+                        principalTable: "AspNetUserRoles",
+                        principalColumns: new[] { "UserId", "RoleId" },
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -557,12 +621,32 @@ namespace BloodHub.Data.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppRoles",
-                columns: new[] { "Id", "ConcurrencyStamp", "Discriminator", "Name", "NormalizedName" },
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { 1, null, "Role", "Admin", "ADMIN" },
-                    { 2, null, "Role", "Manager", "MANAGER" },
-                    { 3, null, "Role", "User", "USER" }
+                    { 1, null, "Admin", "ADMIN" },
+                    { 2, null, "Manager", "MANAGER" },
+                    { 3, null, "User", "USER" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "AppUsers",
+                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "ContactInfo", "Email", "EmailConfirmed", "FullName", "IsActive", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
+                values: new object[,]
+                {
+                    { 1, 0, "6cb530a0-88e5-4c39-9115-331626a8f4f3", null, "superadmin@khotruyenmau.com", true, "Quản trị hệ thống", true, false, null, null, "SUPERADMIN", "AQAAAAIAAYagAAAAEBlfe5KIouxulxpZ69s1QhXrzA6CWSdRnLEix7kPuSQlKH5dj0qWo/CmvvDoo9Y5eQ==", null, false, "9b91917e-fe6a-4499-89b0-ae0fd2019a61", false, "superadmin" },
+                    { 2, 0, "3c507b9e-7862-4118-b380-3ca9d20ea290", null, "admin@khotruyenmau.com", true, "Quản trị hệ thống", true, false, null, null, "ADMIN", "AQAAAAIAAYagAAAAELA7fRR1cNGoqpBIrI+6A3v+fcI+1AmheNQcEfp+4susqvaz1J49hejzzUpSgvIpDQ==", null, false, "1ae641aa-8f91-4731-9511-55a27befc82e", false, "admin" },
+                    { 3, 0, "01abbe21-2e11-40c7-9a6b-f0474a639313", null, "staff@khotruyenmau.com", true, "Nhân viên", true, false, null, null, "STAFF", "AQAAAAIAAYagAAAAEMdeI6tsg02VgZhg8JIIhaRy2cOK/xWMgTp/KEeoezbMukM3eVKZXzRszxWKJPfEzg==", null, false, "5b969213-e3ce-45b1-818d-de0c19c6d99e", false, "staff" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetUserRoles",
+                columns: new[] { "RoleId", "UserId" },
+                values: new object[,]
+                {
+                    { 1, 1 },
+                    { 2, 2 },
+                    { 3, 3 }
                 });
 
             migrationBuilder.InsertData(
@@ -575,20 +659,42 @@ namespace BloodHub.Data.Data.Migrations
                     { 3, 3 }
                 });
 
-            migrationBuilder.InsertData(
-                table: "AppUsers",
-                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "ContactInfo", "Discriminator", "Email", "EmailConfirmed", "FullName", "IsActive", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[,]
-                {
-                    { 1, 0, "244eab60-fa09-4b5a-ad3f-70d360847cb0", null, "User", "superadmin@khotruyenmau.com", true, "Quản trị hệ thống", false, false, null, null, "SUPERADMIN", "AQAAAAIAAYagAAAAEDV0sVoILvbwM16LLf3gChByYbsNE4LuRVPz1qhUsxkXJpxkx9YK/LRnG5W00Xo9EA==", null, false, "dcad200a-f958-46cf-927a-5438c3d284eb", false, "superadmin" },
-                    { 2, 0, "775d9052-824f-47f9-bc55-5493460d06e6", null, "User", "admin@khotruyenmau.com", true, "Quản trị hệ thống", false, false, null, null, "ADMIN", "AQAAAAIAAYagAAAAEF45Oqlm6ttHhpHE5JPa0i+cGrv+7QOnUY+Nlgp4FACrfHuB7a90qrMT6Ffx21Gd9A==", null, false, "90a83419-6060-4802-9f16-81ba8473ba10", false, "admin" },
-                    { 3, 0, "97faa074-a81f-4e8c-9e2f-eaa867c10071", null, "User", "staff@khotruyenmau.com", true, "Nhân viên", false, false, null, null, "STAFF", "AQAAAAIAAYagAAAAEPeXpM9n0RMmCVYs/eR5bqSv7B8ZMhVID0GV8MLNaUlR0XMlVuG5+kamQBCoQVRtCQ==", null, false, "43023238-f9d9-4dfa-a3f0-b42e4b49301b", false, "staff" }
-                });
+            migrationBuilder.CreateIndex(
+                name: "IX_ActivityLogs_UserId",
+                table: "ActivityLogs",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ActitityLogs_UserId",
-                table: "ActitityLogs",
+                name: "IX_AppRoleClaims_RoleId",
+                table: "AppRoleClaims",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "RoleNameIndex",
+                table: "AppRoles",
+                column: "NormalizedName",
+                unique: true,
+                filter: "[NormalizedName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppUserClaims_UserId",
+                table: "AppUserClaims",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppUserLogins_UserId",
+                table: "AppUserLogins",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AppUserRoles_RoleId",
+                table: "AppUserRoles",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "EmailIndex",
+                table: "AppUsers",
+                column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AppUsers_UserName",
@@ -596,6 +702,18 @@ namespace BloodHub.Data.Data.Migrations
                 column: "UserName",
                 unique: true,
                 filter: "[UserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "UserNameIndex",
+                table: "AppUsers",
+                column: "NormalizedUserName",
+                unique: true,
+                filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUserRoles_RoleId",
+                table: "AspNetUserRoles",
+                column: "RoleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuthTokens_Token",
@@ -718,13 +836,10 @@ namespace BloodHub.Data.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ActitityLogs");
+                name: "ActivityLogs");
 
             migrationBuilder.DropTable(
                 name: "AppRoleClaims");
-
-            migrationBuilder.DropTable(
-                name: "AppRoles");
 
             migrationBuilder.DropTable(
                 name: "AppUserClaims");
@@ -734,6 +849,9 @@ namespace BloodHub.Data.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "AppUserRoles");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
                 name: "AuthTokens");
@@ -751,10 +869,13 @@ namespace BloodHub.Data.Data.Migrations
                 name: "TransactionDetails");
 
             migrationBuilder.DropTable(
-                name: "UserTokens");
+                name: "AspNetUserRoles");
 
             migrationBuilder.DropTable(
                 name: "Transactions");
+
+            migrationBuilder.DropTable(
+                name: "AppRoles");
 
             migrationBuilder.DropTable(
                 name: "Crossmatches");

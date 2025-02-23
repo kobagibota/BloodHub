@@ -12,15 +12,15 @@ namespace BloodHub.Shared.Entities
         [Required]
         public DateTime ShiftStart { get; set; }
 
-        public DateTime ShiftEnd { get; set; }
+        public DateTime? ShiftEnd { get; set; }
 
-        public DateTime HandoverTime { get; set; }
+        public DateTime? HandoverTime { get; set; }
 
-        public int ReceivedShiftId { get; set; }
+        public int? ReceivedShiftId { get; set; }
 
-        public int HandBy { get; set; }
+        public int? HandBy { get; set; }
 
-        public int ReceivedBy { get; set; }
+        public int? ReceivedBy { get; set; }
 
         [MaxLength(250)]
         public string? Note { get; set; }
@@ -28,15 +28,15 @@ namespace BloodHub.Shared.Entities
         public ShiftStatus Status { get; set; }
 
         [ForeignKey(nameof(ReceivedShiftId))]
-        public Shift ReceivedShift { get; set; } = null!;
+        public Shift? ReceivedShift { get; set; } = null!;
 
         [ForeignKey(nameof(HandBy))]
         [InverseProperty("ShiftsHanded")] 
-        public User UserHand { get; set; } = null!; 
+        public User? UserHand { get; set; } = null; 
         
         [ForeignKey(nameof(ReceivedBy))]
         [InverseProperty("ShiftsReceived")]
-        public User UserReceived { get; set; } = null!;
+        public User? UserReceived { get; set; } = null;
 
         public virtual ICollection<ShiftDetail> ShiftDetails { get; set; } = new List<ShiftDetail>();
 

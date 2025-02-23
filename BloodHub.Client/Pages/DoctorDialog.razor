@@ -8,7 +8,7 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="form" Model="@Doctor" OnValidSubmit="OnValidSubmit" Spacing="3">
-            <MudTextField @bind-Value="Doctor.DoctorName" Label="Tên bác sĩ" Required="true" FullWidth="true" @ref="doctorNameInput" />
+            <MudTextField @bind-Value="Doctor.DoctorName" Label="Tên bác sĩ" Required="true" FullWidth="true" @ref="doctorNameInput" Variant="Variant.Outlined" />
             <MudSwitch @bind-Value="Doctor.IsHide" Label="Ẩn" Color="Color.Secondary" />
         </MudForm>
     </DialogContent>

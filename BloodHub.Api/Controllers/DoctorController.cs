@@ -25,6 +25,13 @@ namespace BloodHub.Api.Controllers
             return Ok(response);
         }
 
+        [HttpGet("getact")]
+        public async Task<IActionResult> GetActDoctors()
+        {
+            var response = await _doctorService.GetAct();
+            return Ok(response);
+        }
+
         [HttpGet("getbyid/{id}")]
         public async Task<IActionResult> GetDoctorById(int id)
         {

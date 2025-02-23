@@ -20,52 +20,26 @@ namespace BloodHub.Data.Data
             modelBuilder.Entity<Role>().HasData(roles);
 
             // Seed Users
-            var adminUser = new User
+            var users = new List<User>
             {
-                Id = 1,
-                UserName = "superadmin",
-                NormalizedUserName = "SUPERADMIN",
-                FullName = "Quản trị hệ thống",
-                Email = "superadmin@khotruyenmau.com",
-                EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString()
+                new User { Id = 1, UserName = "superadmin", NormalizedUserName = "SUPERADMIN", FullName = "Quản trị hệ thống", Email = "superadmin@khotruyenmau.com", EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(), IsActive = true },
+                new User { Id = 2, UserName = "admin", NormalizedUserName = "ADMIN", FullName = "Quản trị hệ thống", Email = "admin@khotruyenmau.com", EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(), IsActive = true },
+                new User { Id = 3, UserName = "staff", NormalizedUserName = "STAFF", FullName = "Nhân viên", Email = "staff@khotruyenmau.com", EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(), IsActive = true }
             };
-            adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "Admin@123");
-
-            var managerUser = new User
+            foreach (var user in users)
             {
-                Id = 2,
-                UserName = "admin",
-                NormalizedUserName = "ADMIN",
-                FullName = "Quản trị hệ thống",
-                Email = "admin@khotruyenmau.com",
-                EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString()
-            };
-            managerUser.PasswordHash = passwordHasher.HashPassword(managerUser, "Admin@123");
-
-            var staffUser = new User
-            {
-                Id = 3,
-                UserName = "staff",
-                NormalizedUserName = "STAFF",
-                FullName = "Nhân viên",
-                Email = "staff@khotruyenmau.com",
-                EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString()
-            };
-            staffUser.PasswordHash = passwordHasher.HashPassword(staffUser, "Admin@123");
-
-            modelBuilder.Entity<User>().HasData(adminUser, managerUser, staffUser);
+                user.PasswordHash = new PasswordHasher<User>().HashPassword(user, "Admin@123"); // Hash mật khẩu
+            }
+            modelBuilder.Entity<User>().HasData(users);
 
             // Assign Roles to Users
-            var userRoles = new List<IdentityUserRole<int>>
+            var userRoles = new List<UserRole>
             {
-                new IdentityUserRole<int> { UserId = 1, RoleId = 1 }, // superadmin -> Admin
-                new IdentityUserRole<int> { UserId = 2, RoleId = 2 }, // admin -> Manager
-                new IdentityUserRole<int> { UserId = 3, RoleId = 3 }  // staff -> User
+                new UserRole { UserId = 1, RoleId = 1 }, // superadmin -> Admin
+                new UserRole { UserId = 2, RoleId = 2 }, // admin -> Manager
+                new UserRole { UserId = 3, RoleId = 3 }  // staff -> User
             };
-            modelBuilder.Entity<IdentityUserRole<int>>().HasData(userRoles);
+            modelBuilder.Entity<UserRole>().HasData(userRoles);
         }
 
     }

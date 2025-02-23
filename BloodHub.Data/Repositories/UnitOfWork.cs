@@ -12,6 +12,7 @@ namespace BloodHub.Data.Repositories
 
         private IUserRepository? _userRepository;
         private IRoleRepository? _roleRepository;
+        private IUserRoleRepository? _userRoleRepository;
 
         private IAuthTokenRepository? _authTokenRepository;
         private IActivityLogRepository? _activityLogRepository;
@@ -23,7 +24,13 @@ namespace BloodHub.Data.Repositories
         private IProductRepository? _productRepository;
         private IPatientRepository? _patientRepository;
         private IOrderRepository? _orderRepository;
-
+        private IShiftRepository? _shiftRepository;
+        private IShiftDetailRepository? _shiftDetailRepository;
+        private IShiftUserRepository? _shiftUserRepository;
+        private ICrossmatchRepository? _crossmatchRepository;
+        private IInventoryRepository? _inventoryRepository;
+        private ITransactionDetailRepository? _transactionDetailRepository;
+        private ITransactionRepository? _transactionRepository;
 
         #endregion
 
@@ -46,6 +53,11 @@ namespace BloodHub.Data.Repositories
         public IRoleRepository RoleRepository
         {
             get { return _roleRepository ??= new RoleRepository(_dbContext); }
+        }
+
+        public IUserRoleRepository UserRoleRepository
+        {
+            get { return _userRoleRepository ??= new UserRoleRepository(_dbContext); }
         }
 
         public IAuthTokenRepository AuthTokenRepository
@@ -91,6 +103,41 @@ namespace BloodHub.Data.Repositories
         public IOrderRepository OrderRepository
         {
             get { return _orderRepository ??= new OrderRepository(_dbContext); }
+        }
+
+        public IShiftRepository ShiftRepository
+        {
+            get { return _shiftRepository ??= new ShiftRepository(_dbContext); }
+        }
+
+        public IShiftDetailRepository ShiftDetailRepository
+        {
+            get { return _shiftDetailRepository ??= new ShiftDetailRepository(_dbContext); }
+        }
+
+        public IShiftUserRepository ShiftUserRepository
+        {
+            get { return _shiftUserRepository ??= new ShiftUserRepository(_dbContext); }
+        }
+
+        public ICrossmatchRepository CrossmatchRepository
+        {
+            get { return _crossmatchRepository ??= new CrossmatchRepository(_dbContext); }
+        }
+
+        public IInventoryRepository InventoryRepository
+        {
+            get { return _inventoryRepository ??= new InventoryRepository(_dbContext); }
+        }
+
+        public ITransactionDetailRepository TransactionDetailRepository
+        {
+            get { return _transactionDetailRepository ??= new TransactionDetailRepository(_dbContext); }
+        }
+
+        public ITransactionRepository TransactionRepository
+        {
+            get { return _transactionRepository ??= new TransactionRepository(_dbContext); }
         }
 
         #endregion

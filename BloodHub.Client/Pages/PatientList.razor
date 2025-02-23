@@ -25,7 +25,7 @@
                         Filter="new Func<Patient,bool>(FilterFunc)" SelectedItem="selectedPatient"
                       SelectedItemChanged="@(patient => OnSelectedPatientChanged(patient))" HorizontalScrollbar="true">
                 <ToolBarContent>
-                    <MudText Typo="Typo.h4" Class="mb-2">Danh sách bệnh nhân</MudText>
+                    <MudText Typo="Typo.h5" Class="mb-2">Danh sách bệnh nhân</MudText>
 
                     <MudSpacer />
 
@@ -36,7 +36,7 @@
                                     Class="mt-0" Style="margin-right: 12px;" Disabled="@isLoading" />
 
                     <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                                Color="Color.Info" OnClick="@(() => OpenPatientDialog(null))"
+                                Color="Color.Info" OnClick="@(() => OpenPatientDialog(new Patient()))"
                                 Size="Size.Medium" Disabled="@isLoading">
                         Thêm bệnh nhân mới
                     </MudButton>
@@ -54,7 +54,7 @@
                 <!-- Table Header -->
                 <HeaderContent>
                     <MudTh Style="text-align:center">
-                        <MudTableSortLabel SortBy="new Func<Patient, object>(x => x.MedicalId)">Mã y tế</MudTableSortLabel>
+                        <MudTableSortLabel SortBy="new Func<Patient, object?>(x => x.MedicalId ?? string.Empty)">Mã y tế</MudTableSortLabel>
                     </MudTh>
                     <MudTh>
                         <MudTableSortLabel SortBy="new Func<Patient, object>(x => x.PatientName)">Họ và tên</MudTableSortLabel>
@@ -85,14 +85,14 @@
                     </MudTd>
                     <MudTd DataLabel="Hành động" Style="text-align:center">
                         <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
-                                        OnClick="@(() => OpenPatientDialog(selectedPatient))"
+                                       OnClick="@(() => OpenPatientDialog(context))"
                                         Disabled="@(selectedPatient == null || isLoading)">
                             Sửa
                         </MudIconButton>
 
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                        OnClick="@(() => ConfirmDeletePatient(selectedPatient!.Id, selectedPatient))"
-                                        Disabled="@(selectedPatient == null || isLoading)">
+                                       OnClick="@(() => ConfirmDeletePatient(context.Id, context))"
+                                        Disabled="@(isLoading)">
                             Xóa
                         </MudIconButton>
                     </MudTd>
@@ -212,8 +212,8 @@
                             <MudSpacer />
 
                             <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                            Color="Color.Info" OnClick="@(() => OpenOrderDialog(selectedPatient, null))"
-                            Size="Size.Medium" Disabled="@(isLoading || selectedPatient == null)">
+                                       Color="Color.Info" OnClick="@(() => OpenOrderDialog(selectedPatient, new OrderDto(){ OrderDate = DateTime.Now } ))"
+                            Size="Size.Medium" Disabled="@(isLoading || selectedPatient.Id == 0)">
                                 Thêm chỉ định mới
                             </MudButton>
                         </ToolBarContent>
@@ -226,8 +226,8 @@
 
                         <!-- Table Header -->
                         <HeaderContent>
-                            <MudTh>
-                                <MudTableSortLabel Style="text-align:center" InitialDirection="SortDirection.Descending" SortBy="new Func<OrderDto, object>(x => x.OrderDate)">Ngày chỉ định</MudTableSortLabel>
+                            <MudTh Style="text-align:center">
+                                <MudTableSortLabel InitialDirection="SortDirection.Descending" SortBy="new Func<OrderDto, object>(x => x.OrderDate)">Ngày chỉ định</MudTableSortLabel>
                             </MudTh>
                             <MudTh>Bác sĩ chỉ định</MudTh>
                             <MudTh Style="text-align:center">Hành động</MudTh>
@@ -239,13 +239,13 @@
                             <MudTd DataLabel="Bác sĩ chỉ định">@context.DoctorName</MudTd>
                             <MudTd DataLabel="Hành động" Style="text-align:center">
                                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
-                                OnClick="@(() => OpenOrderDialog(selectedPatient, selectedOrder))"
+                                OnClick="@(() => OpenOrderDialog(selectedPatient, context))"
                                 Disabled="@(selectedPatient == null || isLoading)">
                                     Sửa
                                 </MudIconButton>
 
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
-                                OnClick="@(() => ConfirmDeleteOrder(selectedOrder!.Id))"
+                                OnClick="@(() => ConfirmDeleteOrder(context.Id))"
                                 Disabled="@(selectedPatient == null || isLoading)">
                                     Xóa
                                 </MudIconButton>
@@ -419,23 +419,6 @@
         }
     }
 
-    private async Task EditOrder(OrderDto order)
-    {
-        var parameters = new DialogParameters
-        {
-            { "Order", order },
-            { "Patient", selectedPatient }
-        };
-
-        var dialog = DialogService.Show<OrderDialog>("Chỉnh sửa chỉ định", parameters);
-        var result = await dialog.Result;
-
-        if (result != null && !result.Canceled)
-        {
-            await LoadOrders(selectedPatient);
-        }
-    }
-
     private async Task OpenOrderDialog(Patient patient, OrderDto order)
     {
         var parameters = new DialogParameters
@@ -444,7 +427,7 @@
             { "Patient", patient ?? new Patient() }
         };
 
-        string title = (order == null) ? "Thêm mới chỉ định" : "Chỉnh sửa thông tin chỉ định";
+        string title = (order!.Id == 0) ? "Thêm mới chỉ định" : "Chỉnh sửa thông tin chỉ định";
         var dialog = DialogService.Show<OrderDialog>(title, parameters);
         var result = await dialog.Result;
 

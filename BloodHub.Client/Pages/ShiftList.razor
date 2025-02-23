@@ -1,0 +1,427 @@
+﻿@page "/shifts"
+@attribute [Authorize]
+
+@using BloodHub.Client.Components
+@using BloodHub.Client.Services
+@using BloodHub.Shared.DTOs
+@using BloodHub.Shared.Entities
+@using BloodHub.Shared.Extentions
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject ShiftService ShiftService
+@inject OrderService OrderService
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<PageTitle>Danh sách ca trực</PageTitle>
+
+<RoleAuthorizeView Roles="Manager,Admin,User"> 
+    <MudGrid Class="pa-3" Spacing="2" Style="height: calc(100vh - 80px);">
+        <!-- Danh sách ca trực --> 
+        <MudItem xs="12" md="5"> 
+            <MudTable T="ShiftDto" Items="shifts" FixedHeader="true" Dense="true" Striped="true" Hover="true"
+                      Bordered="true" Loading="isLoading" Style="height: calc(100vh - 80px); overflow-y: auto;"
+                      Filter="new Func<ShiftDto,bool>(FilterFunc)" @bind-SelectedItem="selectedShift" HorizontalScrollbar="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h5" Class="mb-2">Danh sách ca trực</MudText>
+
+                    <MudSpacer />
+
+                    <!-- Search Field -->
+                    <MudTextField @bind-Value="searchShift" Placeholder="Tìm kiếm" Clearable="true"
+                                    Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                                    AdornmentColor="Color.Secondary" IconSize="Size.Medium"
+                                    Class="mt-0" Style="margin-right: 12px;" Disabled="@isLoading" />
+
+                    <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                                Color="Color.Info" OnClick="@(() => OpenShiftDialog(new ShiftDto()))"
+                                Size="Size.Medium" Disabled="@isLoading">
+                        Thêm ca trực mới
+                    </MudButton>
+                </ToolBarContent>
+
+                <ColGroup>
+                    <col style="width: 40%; min-width:140px;" />
+                    <col style="width: 25%; min-width:80px;" />
+                    <col style="width: 20%; min-width:60px;" />
+                    <col style="width: 15%; min-width:40px;" />
+                </ColGroup>
+
+                <!-- Table Header -->
+                <HeaderContent>
+                    <MudTh>
+                        <MudTableSortLabel SortBy="new Func<ShiftDto, object?>(x => x.ShiftName)">Tên ca trực</MudTableSortLabel>
+                    </MudTh>
+                    <MudTh Style="text-align:center">
+                        <MudTableSortLabel SortBy="new Func<ShiftDto, object>(x => x.ShiftStart)">Bắt đầu</MudTableSortLabel>
+                    </MudTh>
+                    <MudTh Style="text-align:center">Trạng thái</MudTh>
+                    <MudTh Style="text-align:center">Hành động</MudTh>
+                </HeaderContent>
+
+                <!-- Table Rows -->
+                <RowTemplate>
+                    <MudTd DataLabel="Tên ca trực">
+                        <MudText Color="@StatusColors[context.Status]">
+                            @context.ShiftName
+                        </MudText>
+                    </MudTd>
+
+					<MudTd DataLabel="Bắt đầu" Style="text-align:center">@context.ShiftStart.ToString("HH:mm dd/MM/yyyy")</MudTd>
+
+                    <MudTd DataLabel="Trạng thái" Style="text-align:center">
+                        <MudChip T="string" Color="@StatusColors[context.Status]" Variant="Variant.Filled" Size="Size.Small">
+							@ShiftStatusMapping.EnumToStringMap[context.Status]
+                        </MudChip>
+                    </MudTd>
+
+                    <MudTd DataLabel="Hành động" Style="text-align:center">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                       OnClick="@(() => OpenShiftDialog(context))"
+                                        Disabled="@(selectedShift == null || isLoading)">
+                            Sửa
+                        </MudIconButton>
+
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                       OnClick="@(() => ConfirmDeleteShift(context.Id, context))"
+                                        Disabled="@(isLoading)">
+                            Xóa
+                        </MudIconButton>
+                    </MudTd>
+                </RowTemplate>
+
+                <NoRecordsContent>
+                    <MudPaper Elevation="2" Class="pa-4 text-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Large" />
+                        <MudText Typo="Typo.h6" Class="mt-2">Không có dữ liệu</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">Hãy kiểm tra lại bộ lọc hoặc thêm dữ liệu mới.</MudText>
+                    </MudPaper>
+                </NoRecordsContent>
+
+                <LoadingContent>
+                    <MudContainer Class="text-center">
+                        <MudText Typo="Typo.h6" Class="mt-2">Đang tải dữ liệu...</MudText>
+                    </MudContainer>
+                </LoadingContent>
+            </MudTable>
+        </MudItem>
+
+        <!-- Thông tin ca trực và Danh sách order --> 
+        <MudItem xs="12" md="7"> 
+            <MudGrid Class="p-2" Spacing="2"> 
+                <!-- Thông tin ca trực --> 
+                <MudItem xs="12">                    
+                    <MudCard>
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6">Ca trực: <strong class="mud-error-text">@(selectedShift?.ShiftName)</strong></MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+
+                        <MudCardContent>
+                            <MudGrid Spacing="1">
+                                <MudItem xs="8"> 
+                                    <MudText>Bắt đầu: <strong>@selectedShift?.ShiftStart.ToString("HH:mm dd/MM/yyyy")</strong></MudText>
+                                </MudItem>
+
+								<MudItem xs="4">
+                                    <MudText>Kết thúc: <strong>@selectedShift.ShiftEnd?.ToString("HH:mm dd/MM/yyyy")</strong></MudText>
+								</MudItem>
+
+                                <MudItem xs="12">
+                                    <MudText>
+                                        Người trực:
+                                        @foreach (var item in selectedShift.ShiftUsers)
+                                        {
+                                            <MudChip T="string" Color="Color.Success" Size="Size.Small">@item.ShortName</MudChip>
+                                        }                                        
+                                    </MudText>
+                                </MudItem>
+
+                                <MudDivider />
+
+                                <MudItem xs="8">
+                                    <MudText>Người giao: <strong>@selectedShift.UserHand</strong></MudText>
+                                </MudItem>
+
+                                <MudItem xs="4">
+                                    <MudText>Giao ca lúc: <strong>@selectedShift.HandoverTime?.ToString("HH:mm dd/MM/yyyy")</strong></MudText>
+                                </MudItem>
+
+								<MudItem xs="8">
+									<MudText>Người nhận ca:<strong>@selectedShift.UserReceived</strong></MudText>
+								</MudItem>
+
+								<MudItem xs="4">
+									<MudText>
+										Trạng thái: 
+                                        <MudChip T="string" Size="Size.Small" Color="@StatusColors[selectedShift.Status]">
+											@ShiftStatusMapping.EnumToStringMap[selectedShift.Status]
+                                        </MudChip>
+									</MudText>
+								</MudItem>
+
+								<MudDivider />
+
+								<MudItem xs="12">
+									<MudText>Ghi chú: <em>@selectedShift.Note</em></MudText>
+								</MudItem>
+                            </MudGrid>
+                        </MudCardContent>
+
+                        <MudCardActions>
+                            <MudButton Href="/crossmatch"
+                                        StartIcon="@Icons.Material.Filled.Biotech" Color="Color.Tertiary"
+                                        Variant="Variant.Outlined" FullWidth="true"
+                                        Disabled="@(selectedShift.Id == 0)">
+                                            Giao ca
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem> 
+
+                <!-- Thông tin order -->
+                @* <MudItem xs="12" Style="height: calc(100vh - 450px);">
+                    <MudTable T="OrderDto" Items="orders" FixedHeader="true" Dense="true" Striped="true" Hover="true"
+                              Bordered="true" Loading="isLoading" Style="height: calc(100vh - 450px); overflow-y: auto;" SortLabel="Sort By"
+                              @bind-SelectedItem="selectedOrder" HorizontalScrollbar="true">
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6" Class="mb-2">Danh sách chỉ định</MudText>
+
+                            <MudSpacer />
+
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
+                                       Color="Color.Info" OnClick="@(() => OpenOrderDialog(selectedShift, new OrderDto(){ OrderDate = DateTime.Now } ))"
+                            Size="Size.Medium" Disabled="@(isLoading || selectedShift.Id == 0)">
+                                Thêm chỉ định mới
+                            </MudButton>
+                        </ToolBarContent>
+
+                        <ColGroup>
+                            <col style="width: 30%; min-width:35px; text-align:center" />
+                            <col style="width: 50%; min-width:80px;" />
+                            <col style="width: 20%; min-width:30px;" />
+                        </ColGroup>
+
+                        <!-- Table Header -->
+                        <HeaderContent>
+                            <MudTh Style="text-align:center">
+                                <MudTableSortLabel InitialDirection="SortDirection.Descending" SortBy="new Func<OrderDto, object>(x => x.OrderDate)">Ngày chỉ định</MudTableSortLabel>
+                            </MudTh>
+                            <MudTh>Bác sĩ chỉ định</MudTh>
+                            <MudTh Style="text-align:center">Hành động</MudTh>
+                        </HeaderContent>
+
+                        <!-- Table Rows -->
+                        <RowTemplate>
+                            <MudTd DataLabel="Ngày chỉ định" Style="text-align:center">@context.OrderDate.ToString("dd/MM/yyyy")</MudTd>
+                            <MudTd DataLabel="Bác sĩ chỉ định">@context.DoctorName</MudTd>
+                            <MudTd DataLabel="Hành động" Style="text-align:center">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small"
+                                OnClick="@(() => OpenOrderDialog(selectedShift, context))"
+                                Disabled="@(selectedShift == null || isLoading)">
+                                    Sửa
+                                </MudIconButton>
+
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                OnClick="@(() => ConfirmDeleteOrder(context.Id))"
+                                Disabled="@(selectedShift == null || isLoading)">
+                                    Xóa
+                                </MudIconButton>
+                            </MudTd>
+                        </RowTemplate>
+
+                        <NoRecordsContent>
+                            <MudPaper Elevation="2" Class="pa-4 text-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Info" Size="Size.Large" />
+                                <MudText Typo="Typo.h6" Class="mt-2">Không có dữ liệu</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">Hãy kiểm tra lại bộ lọc hoặc thêm dữ liệu mới.</MudText>
+                            </MudPaper>
+                        </NoRecordsContent>
+
+                        <LoadingContent>
+                            <MudContainer Class="text-center">
+                                <MudText Typo="Typo.h6" Class="mt-2">Đang tải dữ liệu...</MudText>
+                            </MudContainer>
+                        </LoadingContent>
+                    </MudTable>
+                </MudItem>  *@
+            </MudGrid>
+        </MudItem> 
+    </MudGrid>
+</RoleAuthorizeView>
+
+@code {
+    private List<ShiftDto> shifts = new List<ShiftDto>();
+    private List<OrderDto> orders = new List<OrderDto>();
+    private ShiftDto selectedShift = new ShiftDto();
+    private OrderDto selectedOrder = new OrderDto();
+    private string searchShift = ""; 
+    private string searchOrder = "";
+    private bool isLoading = true;
+    private bool isOrderLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadShifts();
+    }
+
+    private bool FilterFunc(ShiftDto element) => FilterFunc(element, searchShift);
+
+    private bool FilterFunc(ShiftDto element, string searchShift)
+    {
+        if (string.IsNullOrWhiteSpace(searchShift))
+            return true;
+        if (element.ShiftName.Contains(searchShift, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.UserReceived != null && element.UserReceived.Contains(searchShift, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private async Task OpenShiftDialog(ShiftDto shiftDto)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Shift", shiftDto ?? new ShiftDto() }
+        };
+
+        string title = (shiftDto == null) ? "Thêm mới ca trực" : "Chỉnh sửa thông tin ca trực";
+        var dialog = DialogService.Show<ShiftDialog>(title, parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadShifts();
+        }
+    }
+
+    private async Task ConfirmDeleteShift(int shiftId, ShiftDto shiftDto)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Bạn có chắc chắn muốn xóa ca trực \"{shiftDto.ShiftName}\" không?" },
+        };
+
+        var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false)
+        {
+            var response = await ShiftService.DeleteShift(shiftId);
+            if (response.Success)
+            {
+                await LoadShifts();
+            }
+            else
+            {
+                await DialogService.ShowMessageBox("Lỗi", response.Message);
+            }
+        }
+    }
+
+    private async Task LoadShifts()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await ShiftService.GetAllShifts();
+            if (response.Success && response.Data != null)
+            {
+                shifts = response.Data;
+            }
+            else
+            {
+                await DialogService.ShowMessageBox("Lỗi", response.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi khi tải danh sách ca trực: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // private async Task LoadOrders(Shift shift)
+    // {
+    //     if (shift == null)
+    //     {
+    //         await DialogService.ShowMessageBox("lỗi", "Không thể tải chỉ định vì không có ca trực được chọn.");
+    //         return;
+    //     }
+
+    //     var response = await OrderService.GetOrderByShiftId(selectedShift.Id);
+    //     if (response.Success)
+    //     {
+    //         orders = response.Data ?? new List<OrderDto>();
+    //     }
+    //     else
+    //     {
+    //         await DialogService.ShowMessageBox("Lỗi", response.Message);
+    //     }
+    // }
+
+    // private async Task OnSelectedShiftChanged(ShiftDto shift)
+    // {
+    //     if (shift != null)
+    //     {
+    //         selectedShift = shift;
+    //         await LoadOrders(selectedShift);
+    //     }
+    //     selectedOrder = new OrderDto();
+    // }
+
+    // private async Task ConfirmDeleteOrder(int orderId)
+    // {
+    //     var parameters = new DialogParameters
+    //     {
+    //         { "ContentText", $"Bạn có chắc chắn muốn xóa chỉ định này không?" },
+    //     };
+
+    //     var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
+    //     var result = await dialog.Result;
+
+    //     if (result?.Canceled == false)
+    //     {
+    //         var response = await OrderService.DeleteOrder(orderId);
+    //         if (response.Success)
+    //         {
+    //             await LoadOrders(selectedShift);
+    //         }
+    //         else
+    //         {
+    //             await DialogService.ShowMessageBox("Lỗi", response.Message);
+    //         }
+    //     }
+    // }
+
+    // private async Task OpenOrderDialog(Shift shift, OrderDto order)
+    // {
+    //     var parameters = new DialogParameters
+    //     {
+    //         { "Order", order ?? new OrderDto(){ OrderDate = DateTime.Now } },
+    //         { "Shift", shift ?? new Shift() }
+    //     };
+
+    //     string title = (order!.Id == 0) ? "Thêm mới chỉ định" : "Chỉnh sửa thông tin chỉ định";
+    //     var dialog = DialogService.Show<OrderDialog>(title, parameters);
+    //     var result = await dialog.Result;
+
+    //     if (result != null && !result.Canceled)
+    //     {
+    //         await LoadOrders(selectedShift);
+    //     }
+    // }
+
+    private Dictionary<ShiftStatus, Color> StatusColors = new()
+    {
+        { ShiftStatus.Pending, Color.Error },        
+        { ShiftStatus.InProgress, Color.Info },        
+        { ShiftStatus.Transferred, Color.Warning },    
+        { ShiftStatus.Completed, Color.Default }       
+    };
+}

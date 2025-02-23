@@ -11,7 +11,7 @@ namespace BloodHub.Data.Repositories
 
         public async Task<IEnumerable<ActivityLog>> GetLogsByUserAsync(int userId, int page, int pageSize)
         {
-            return await _dbContext.ActitityLogs
+            return await _dbContext.ActivityLogs
                 .Where(log => log.UserId == userId)
                 .OrderByDescending(log => log.Timestamp)
                 .Skip((page - 1) * pageSize)
