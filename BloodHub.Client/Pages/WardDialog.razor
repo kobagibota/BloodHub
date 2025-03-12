@@ -4,6 +4,7 @@
 @inject WardService WardService
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
+@inject ISnackbar Snackbar
 
 <MudDialog>
     <DialogContent>
@@ -87,6 +88,10 @@
                 await FocusWardNameInput();
                 isLoading = false;
                 return;
+            }
+            else
+            {
+                Snackbar.Add("Cập nhật thông tin khoa/phòng thành công!", Severity.Success);
             }
 
             MudDialog.Close(DialogResult.Ok(true));

@@ -6,6 +6,7 @@
 @using System.Linq
 
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject OrderService OrderService
 @inject DoctorService DoctorService
 @inject WardService WardService
@@ -214,6 +215,10 @@
                 await DialogService.ShowMessageBox("Lỗi dữ liệu", response.Message);
                 isLoading = false;
                 return;
+            }
+            else
+            {
+                Snackbar.Add("Cập nhật thông tin chỉ định thành công!", Severity.Success);
             }
 
             MudDialog.Close(DialogResult.Ok(true));

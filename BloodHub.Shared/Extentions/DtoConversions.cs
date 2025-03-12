@@ -13,8 +13,8 @@ namespace BloodHub.Shared.Extentions
             return new AuthDto
             {
                 Id = user.Id,
-                Username = user.UserName!,
-                FullName = user.FullName,
+                Username = user.Username!,
+                ShortName = user.ShortName,
                 Roles = string.Join(", ", roles ?? Enumerable.Empty<string>()) // Tránh lỗi null
             };
         }
@@ -35,10 +35,15 @@ namespace BloodHub.Shared.Extentions
             return new UserDto
             {
                 Id = user.Id,
-                UserName = user.UserName!,
+                Username = user.Username!,
+                Title = user.Title,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
                 FullName = user.FullName,
+                ShortName = user.ShortName,
                 ContactInfo = user.ContactInfo,
                 IsActive = user.IsActive,
+                IsOnDuty = user.IsOnDuty,
                 Roles = roles
             };
         }
@@ -76,7 +81,7 @@ namespace BloodHub.Shared.Extentions
         // Chuyển đổi một danh sách ChangeLog sang danh sách ChangeLogDto  
         public static IEnumerable<ChangeLogDto> ConvertToDto(this IEnumerable<ChangeLog> changeLogs, IEnumerable<User> users)
         {
-            var userDictionary = users.ToDictionary(u => u.Id, u => u.UserName); // Tạo từ điển  
+            var userDictionary = users.ToDictionary(u => u.Id, u => u.Username); // Tạo từ điển  
 
             return changeLogs.Select(cl => cl.ConvertToDto(userDictionary.GetValueOrDefault(cl.UserId) ?? "Unknown"));
         }

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using BloodHub.Shared.DTOs;
+﻿using BloodHub.Shared.DTOs;
 using BloodHub.Shared.Entities;
 using BloodHub.Shared.Extentions;
 using BloodHub.Shared.Interfaces;
@@ -22,14 +21,13 @@ namespace BloodHub.Api.Services
     #endregion
 
     public class AuthTokenService(JwtTokenService jwtTokenService, IUnitOfWork unitOfWork,
-        RequestInfoProvider infoProvider, UserManager<User> userManager) : IAuthTokenService
+        RequestInfoProvider infoProvider) : IAuthTokenService
     {
         #region Private members
 
         private readonly JwtTokenService _jwtTokenService = jwtTokenService;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
         private readonly RequestInfoProvider _infoProvider = infoProvider;
-        private readonly UserManager<User> _userManager = userManager;
 
         #endregion Private members
 
@@ -56,15 +54,14 @@ namespace BloodHub.Api.Services
             await _unitOfWork.SaveAsync();
         }
 
+        // Tạo Access Token + Refresh Token
         public async Task<ServiceResponse<TokenResponse>> GenerateTokensAsync(AuthDto userDto)
         {
-            var tokenResponse = new TokenResponse();
-
-            var accessToken = _jwtTokenService.GenerateAccessToken(userDto);
-            var refreshTokenResponse = await GenerateRefreshTokenAsync(userDto.Id);
-
-            tokenResponse.AccessToken = accessToken;
-            tokenResponse.RefreshToken = refreshTokenResponse;
+            var tokenResponse = new TokenResponse
+            {
+                AccessToken = _jwtTokenService.GenerateAccessToken(userDto),
+                RefreshToken = await GenerateRefreshTokenAsync(userDto.Id)
+            };
 
             return new ServiceResponse<TokenResponse>
             {
@@ -73,23 +70,35 @@ namespace BloodHub.Api.Services
             };
         }
 
+        // Tạo và lưu Refresh Token dưới dạng hash
         public async Task<string> GenerateRefreshTokenAsync(int userId)
         {
-            var refreshToken = new AuthToken
+            // Tạo Refresh Token gốc (plain text)
+            var refreshToken = Guid.NewGuid().ToString();
+
+            // Băm Refresh Token trước khi lưu vào cơ sở dữ liệu
+            var refreshTokenHash = BCrypt.Net.BCrypt.HashPassword(refreshToken);
+
+            var authToken = new AuthToken
             {
                 UserId = userId,
-                Token = Guid.NewGuid().ToString(),
+                TokenHash = refreshTokenHash, // Lưu hash của token thay vì token gốc
                 TokenType = TokenType.RefreshToken,
-                ExpiryDate = DateTime.UtcNow.AddDays(7)
+                ExpiryDate = DateTime.UtcNow.AddDays(7),
             };
 
-            await _unitOfWork.AuthTokenRepository.AddAsync(refreshToken);
+            // Lưu AuthToken vào cơ sở dữ liệu
+            await _unitOfWork.AuthTokenRepository.AddAsync(authToken);
             await _unitOfWork.SaveAsync();
-            await LogActionAsync(userId, Activity.Generate, refreshToken.Token);
 
-            return refreshToken.Token;
+            // Ghi log việc tạo Refresh Token
+            await LogActionAsync(userId, Activity.Generate, refreshToken);
+
+            // Trả về Refresh Token gốc (plain text) cho client
+            return refreshToken;
         }
 
+        // Xoay vòng Refresh Token
         public async Task<ServiceResponse<TokenResponse>> RotateRefreshTokenAsync(string token)
         {
             var response = new ServiceResponse<TokenResponse>();
@@ -116,23 +125,25 @@ namespace BloodHub.Api.Services
             }
 
             // Lấy danh sách các vai trò của user
-            var roles = await _userManager.GetRolesAsync(user);
+            var userRoles = await _unitOfWork.UserRoleRepository.GetListByAsync(ur => ur.UserId == user.Id, r => r.Role);
+            var roleNames = userRoles.Select(ur => ur.Role.Name).ToList();
 
             // Tạo UserDto
             var userDto = new AuthDto
             {
                 Id = user.Id,
-                Username = user.UserName!,
-                FullName = user.FullName,
-                Roles = string.Join(",", roles)
+                Username = user.Username!,
+                ShortName = user.ShortName,
+                Roles = string.Join(",", roleNames)
             };
 
             // Tạo Access Token và Refresh Token mới
             var accessToken = _jwtTokenService.GenerateAccessToken(userDto);
             var newRefreshToken = await GenerateRefreshTokenAsync(user.Id);
 
-            // Cập nhật Refresh Token cũ
-            oldToken.ReplacedByToken = newRefreshToken;
+            // Lưu hash thay vì token thô
+            var newRefreshTokenHash = BCrypt.Net.BCrypt.HashPassword(newRefreshToken);
+            oldToken.ReplacedByToken = newRefreshTokenHash;
             await _unitOfWork.SaveAsync();
 
             response.Data = new TokenResponse { AccessToken = accessToken, RefreshToken = newRefreshToken };

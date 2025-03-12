@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BloodHub.Data.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250222165748_InitialDB")]
+    [Migration("20250311152414_InitialDB")]
     partial class InitialDB
     {
         /// <inheritdoc />
@@ -80,8 +80,14 @@ namespace BloodHub.Data.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GetDate()");
 
+                    b.Property<string>("DeviceInfo")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("IpAddress")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsUsed")
                         .HasColumnType("bit");
@@ -92,9 +98,13 @@ namespace BloodHub.Data.Data.Migrations
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Token")
+                    b.Property<bool>("RevokedByAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TokenHash")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("TokenType")
                         .HasColumnType("int");
@@ -104,12 +114,12 @@ namespace BloodHub.Data.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Token")
+                    b.HasIndex("TokenHash")
                         .IsUnique();
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuthTokens", (string)null);
+                    b.ToTable("AuthTokens");
                 });
 
             modelBuilder.Entity("BloodHub.Shared.Entities.ChangeLog", b =>
@@ -409,24 +419,15 @@ namespace BloodHub.Data.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("AppRoles", (string)null);
 
@@ -434,20 +435,17 @@ namespace BloodHub.Data.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Name = "Admin",
-                            NormalizedName = "ADMIN"
+                            Name = "Admin"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Manager",
-                            NormalizedName = "MANAGER"
+                            Name = "Manager"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "User",
-                            NormalizedName = "USER"
+                            Name = "User"
                         });
                 });
 
@@ -650,13 +648,6 @@ namespace BloodHub.Data.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ContactInfo")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -666,68 +657,46 @@ namespace BloodHub.Data.Data.Migrations
                         .HasColumnType("datetime2")
                         .HasDefaultValueSql("GetDate()");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
-                    b.Property<string>("FullName")
+                    b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                    b.Property<bool>("MustChangePassword")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(2147483647)
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(256)");
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("UserName")
-                        .IsUnique()
-                        .HasFilter("[UserName] IS NOT NULL");
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("AppUsers", (string)null);
 
@@ -735,147 +704,42 @@ namespace BloodHub.Data.Data.Migrations
                         new
                         {
                             Id = 1,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "6cb530a0-88e5-4c39-9115-331626a8f4f3",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "superadmin@khotruyenmau.com",
-                            EmailConfirmed = true,
-                            FullName = "Quản trị hệ thống",
+                            FirstName = "Admin",
                             IsActive = true,
-                            LockoutEnabled = false,
-                            NormalizedUserName = "SUPERADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEBlfe5KIouxulxpZ69s1QhXrzA6CWSdRnLEix7kPuSQlKH5dj0qWo/CmvvDoo9Y5eQ==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "9b91917e-fe6a-4499-89b0-ae0fd2019a61",
-                            TwoFactorEnabled = false,
-                            UserName = "superadmin"
+                            LastName = "Super",
+                            MustChangePassword = true,
+                            PasswordHash = "$2a$12$vowlXRmZgClkuqDT3AVI3eChb0m9yzCJsmaGVwts9Rc48OJISVgk6",
+                            Title = "Mr.",
+                            Username = "superadmin"
                         },
                         new
                         {
                             Id = 2,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "3c507b9e-7862-4118-b380-3ca9d20ea290",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "admin@khotruyenmau.com",
-                            EmailConfirmed = true,
-                            FullName = "Quản trị hệ thống",
+                            FirstName = "Hệ thống",
                             IsActive = true,
-                            LockoutEnabled = false,
-                            NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAELA7fRR1cNGoqpBIrI+6A3v+fcI+1AmheNQcEfp+4susqvaz1J49hejzzUpSgvIpDQ==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "1ae641aa-8f91-4731-9511-55a27befc82e",
-                            TwoFactorEnabled = false,
-                            UserName = "admin"
+                            LastName = "Quản trị",
+                            MustChangePassword = true,
+                            PasswordHash = "$2a$12$uvModtbqGarYoFdeTkUj4egb0j2dGoSzM.XeBQnyFCXRqAWPEh6Qq",
+                            Title = "Mr.",
+                            Username = "admin"
                         },
                         new
                         {
                             Id = 3,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "01abbe21-2e11-40c7-9a6b-f0474a639313",
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "staff@khotruyenmau.com",
-                            EmailConfirmed = true,
-                            FullName = "Nhân viên",
+                            FirstName = "Viên",
                             IsActive = true,
-                            LockoutEnabled = false,
-                            NormalizedUserName = "STAFF",
-                            PasswordHash = "AQAAAAIAAYagAAAAEMdeI6tsg02VgZhg8JIIhaRy2cOK/xWMgTp/KEeoezbMukM3eVKZXzRszxWKJPfEzg==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "5b969213-e3ce-45b1-818d-de0c19c6d99e",
-                            TwoFactorEnabled = false,
-                            UserName = "staff"
+                            LastName = "Nhân",
+                            MustChangePassword = true,
+                            PasswordHash = "$2a$12$JyjxKy1uP1McMS4iWNHVjuPf5vXXQId4NogVRE2iY0WvMJE2dBD8q",
+                            Title = "CN.",
+                            Username = "staff"
                         });
                 });
 
-            modelBuilder.Entity("BloodHub.Shared.Entities.Ward", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("WardName")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Wards");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AppRoleClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AppUserClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("LoginProvider", "ProviderKey");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AppUserLogins", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
+            modelBuilder.Entity("BloodHub.Shared.Entities.UserRole", b =>
                 {
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -884,34 +748,6 @@ namespace BloodHub.Data.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("UserId", "RoleId");
-
-                    b.ToTable("AspNetUserRoles", (string)null);
-
-                    b.UseTptMappingStrategy();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserId", "LoginProvider", "Name");
-
-                    b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("BloodHub.Shared.Entities.UserRole", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUserRole<int>");
 
                     b.HasIndex("RoleId");
 
@@ -935,6 +771,24 @@ namespace BloodHub.Data.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BloodHub.Shared.Entities.Ward", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("WardName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Wards");
+                });
+
             modelBuilder.Entity("BloodHub.Shared.Entities.ActivityLog", b =>
                 {
                     b.HasOne("BloodHub.Shared.Entities.User", "User")
@@ -949,7 +803,7 @@ namespace BloodHub.Data.Data.Migrations
             modelBuilder.Entity("BloodHub.Shared.Entities.AuthToken", b =>
                 {
                     b.HasOne("BloodHub.Shared.Entities.User", "User")
-                        .WithMany("RefreshTokens")
+                        .WithMany("AuthTokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1153,59 +1007,17 @@ namespace BloodHub.Data.Data.Migrations
                     b.Navigation("Transaction");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
-                {
-                    b.HasOne("BloodHub.Shared.Entities.Role", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
-                {
-                    b.HasOne("BloodHub.Shared.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
-                {
-                    b.HasOne("BloodHub.Shared.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
-                {
-                    b.HasOne("BloodHub.Shared.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("BloodHub.Shared.Entities.UserRole", b =>
                 {
                     b.HasOne("BloodHub.Shared.Entities.Role", "Role")
                         .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("BloodHub.Shared.Entities.User", "User")
                         .WithMany("UserRoles")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", null)
-                        .WithOne()
-                        .HasForeignKey("BloodHub.Shared.Entities.UserRole", "UserId", "RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1274,9 +1086,9 @@ namespace BloodHub.Data.Data.Migrations
 
             modelBuilder.Entity("BloodHub.Shared.Entities.User", b =>
                 {
-                    b.Navigation("Crossmatches");
+                    b.Navigation("AuthTokens");
 
-                    b.Navigation("RefreshTokens");
+                    b.Navigation("Crossmatches");
 
                     b.Navigation("ShiftUsers");
 

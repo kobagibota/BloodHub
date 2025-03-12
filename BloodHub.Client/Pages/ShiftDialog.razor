@@ -6,6 +6,7 @@
 @using System.Linq
 
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject ShiftService ShiftService
 @inject UserService UserService
 
@@ -133,6 +134,10 @@
                 await DialogService.ShowMessageBox("Lỗi dữ liệu", response.Message);
                 isLoading = false;
                 return;
+            }
+            else
+            {
+                Snackbar.Add("Cập nhật thông tin ca trực thành công!", Severity.Success);
             }
 
             MudDialog.Close(DialogResult.Ok(true));

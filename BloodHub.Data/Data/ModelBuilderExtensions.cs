@@ -13,22 +13,22 @@ namespace BloodHub.Data.Data
             // Seed Roles
             var roles = new List<Role>
             {
-                new Role { Id = 1, Name = "Admin", NormalizedName = "ADMIN" },
-                new Role { Id = 2, Name = "Manager", NormalizedName = "MANAGER" },
-                new Role { Id = 3, Name = "User", NormalizedName = "USER" }
+                new Role { Id = 1, Name = "Admin" },
+                new Role { Id = 2, Name = "Manager" },
+                new Role { Id = 3, Name = "User" }
             };
             modelBuilder.Entity<Role>().HasData(roles);
 
             // Seed Users
             var users = new List<User>
             {
-                new User { Id = 1, UserName = "superadmin", NormalizedUserName = "SUPERADMIN", FullName = "Quản trị hệ thống", Email = "superadmin@khotruyenmau.com", EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(), IsActive = true },
-                new User { Id = 2, UserName = "admin", NormalizedUserName = "ADMIN", FullName = "Quản trị hệ thống", Email = "admin@khotruyenmau.com", EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(), IsActive = true },
-                new User { Id = 3, UserName = "staff", NormalizedUserName = "STAFF", FullName = "Nhân viên", Email = "staff@khotruyenmau.com", EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(), IsActive = true }
+                new User { Id = 1, Username = "superadmin", Title = "Mr.", LastName = "Super", FirstName = "Admin", IsActive = true },
+                new User { Id = 2, Username = "admin", Title = "Mr.", LastName = "Quản trị", FirstName = "Hệ thống", IsActive = true },
+                new User { Id = 3, Username = "staff", Title = "CN.", LastName = "Nhân", FirstName = "Viên", IsActive = true }
             };
             foreach (var user in users)
             {
-                user.PasswordHash = new PasswordHasher<User>().HashPassword(user, "Admin@123"); // Hash mật khẩu
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123", workFactor: 12); // Hash mật khẩu với BCrypt
             }
             modelBuilder.Entity<User>().HasData(users);
 

@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using BloodHub.Shared.DTOs;
-using BloodHub.Shared.Entities;
+﻿using BloodHub.Shared.DTOs;
 using BloodHub.Shared.Extentions;
 using BloodHub.Shared.Interfaces;
 using BloodHub.Shared.Respones;
@@ -20,24 +18,14 @@ namespace BloodHub.Api.Services
 
     #endregion Interface
 
-    public class AuthService(IUnitOfWork unitOfWork, IAuthTokenService authTokenService, 
-        UserManager<User> userManager, SignInManager<User> signInManager) : IAuthService
+    public class AuthService(IUnitOfWork unitOfWork, IAuthTokenService authTokenService) : IAuthService
     {
         #region Private properties
 
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
         private readonly IAuthTokenService _authTokenService = authTokenService;
-        private readonly UserManager<User> _userManager = userManager;
-        private readonly SignInManager<User> _signInManager = signInManager;
 
         #endregion Private properties
-
-
-        //RegisterAsync(UserRegisterRequest request) – Đăng ký user mới.
-        //LoginAsync(LoginRequest request) – Đăng nhập & tạo JWT Token.
-        //RefreshTokenAsync(string refreshToken) – Cấp lại access token.
-        //ChangePasswordAsync(ChangePasswordRequest request) – Đổi mật khẩu.
-        //AssignRolesAsync(int userId, List<string> roles) – Gán vai trò cho user.
 
         #region Methods
 
@@ -47,7 +35,7 @@ namespace BloodHub.Api.Services
 
             try
             {
-                var user = await _userManager.FindByNameAsync(loginDto.UserName);
+                var user = await _unitOfWork.UserRepository.GetFirstOrDefaultAsync(u => u.Username == loginDto.UserName);
                 if (user == null)
                 {
                     response.Success = false;
@@ -55,17 +43,17 @@ namespace BloodHub.Api.Services
                     return response;
                 }
 
-                if (!await _userManager.CheckPasswordAsync(user, loginDto.Password))
+                if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                 {
                     response.Success = false;
                     response.Message = "Mật khẩu không chính xác.";
                     return response;
                 }
 
-                await _signInManager.SignInAsync(user, isPersistent: false);
+                var userRoles = await _unitOfWork.UserRoleRepository.GetListByAsync(ur => ur.UserId == user.Id, r => r.Role);
+                var roleNames = userRoles.Select(ur => ur.Role.Name).ToList();
 
-                var roles = await _userManager.GetRolesAsync(user);
-                var userDto = user.ConvertToAuthDto(roles);
+                var userDto = user.ConvertToAuthDto(roleNames);
 
                 // Tạo Access Token và Refresh Token
                 var tokenResponse = await _authTokenService.GenerateTokensAsync(userDto);
@@ -92,39 +80,34 @@ namespace BloodHub.Api.Services
 
             try
             {
-                var user = await _userManager.FindByIdAsync(userId.ToString());
+                var user = await _unitOfWork.UserRepository.GetByIdAsync(userId);
                 if (user == null)
                 {
                     response.Success = false;
-                    response.Message = "Tài khoản này không tồn tại. \n Mời bạn xem lại.";
+                    response.Message = "Tài khoản không tồn tại.";
                     return response;
                 }
 
-                var passwordHasher = new PasswordHasher<User>();
-                var veryfyResult = passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.CurrentPassword); 
-                if (veryfyResult != PasswordVerificationResult.Success) 
-                { 
-                    response.Success = false; 
-                    response.Message = "Mật khẩu hiện tại không chính xác.";
-
-                    return response; 
-                }
-                user.PasswordHash = passwordHasher.HashPassword(user, request.NewPassword);
-                var result = await _userManager.UpdateAsync(user);
-                if (result.Succeeded)
-                {
-                    response.Data = true;
-                    response.Success = true;
-                    response.Message = "Đổi mật khẩu thành công.";
-
-                    // Log đổi mật khẩu
-                    await _authTokenService.LogActionAsync(userId, Activity.ChangePassword, "Password updated");
-                }
-                else
+                if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
                 {
                     response.Success = false;
-                    response.Message = "Đổi mật khẩu không thành công.";
+                    response.Message = "Mật khẩu không chính xác.";
+                    return response;
                 }
+
+                // Băm mật khẩu mới và cập nhật
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword, workFactor: 12);
+                // workFactor: 12 là số vòng băm (độ mạnh của hash), giá trị mặc định là 10, nhưng 12 là mức khuyến nghị
+
+                _unitOfWork.UserRepository.Update(user);
+                await _unitOfWork.SaveAsync();
+                
+                response.Data = true;
+                response.Success = true;
+                response.Message = "Đổi mật khẩu thành công.";
+
+                // Log đổi mật khẩu
+                await _authTokenService.LogActionAsync(userId, Activity.ChangePassword, "Password updated");                
             }
             catch (Exception)
             {
@@ -143,12 +126,11 @@ namespace BloodHub.Api.Services
                 // Thu hồi tất cả Refresh Tokens
                 await _authTokenService.RevokeTokensByTypeAsync(userId, TokenType.RefreshToken);
 
-                await _signInManager.SignOutAsync();
-
                 // Log action logout
                 await _authTokenService.LogActionAsync(userId, Activity.Logout, accessToken);
 
                 response.Success = true;
+                response.Data = true;
                 response.Message = "Đăng xuất thành công.";
             }
             catch (Exception)
@@ -185,15 +167,16 @@ namespace BloodHub.Api.Services
                 await _authTokenService.RevokeTokensByTypeAsync(userId, TokenType.RefreshToken);
 
                 // Log revoke token
-                await _authTokenService.LogActionAsync(userId, Activity.Revoke, "Revoke all tokens");
+                await _authTokenService.LogActionAsync(userId, Activity.Revoke, "Tất cả các token đã bị thu hồi.");
 
                 response.Success = true;
+                response.Data = true;
                 response.Message = "Đã thu hồi tất cả token của người dùng.";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 response.Success = false;
-                response.Message = "Có lỗi xảy ra";
+                response.Message = $"Xảy ra lỗi trong quá trình thu hồi token: {ex.Message}";
             }
 
             return response;

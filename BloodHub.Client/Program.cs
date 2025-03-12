@@ -56,6 +56,6 @@ builder.Services.AddScoped<PatientService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ShiftService>();
 builder.Services.AddScoped<UserService>();
-
+builder.Services.AddScoped<RoleService>();
 
 await builder.Build().RunAsync();

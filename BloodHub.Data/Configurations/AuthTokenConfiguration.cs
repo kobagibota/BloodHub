@@ -8,7 +8,7 @@ namespace BloodHub.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<AuthToken> builder)
         {
-            builder.HasIndex(x => x.Token).IsUnique();
+            builder.HasIndex(x => x.TokenHash).IsUnique();
             builder.Property(x => x.CreatedAt).HasDefaultValueSql("GetDate()").ValueGeneratedOnAdd();
         }
     }

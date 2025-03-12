@@ -32,15 +32,17 @@ namespace BloodHub.Api.Services
             // Tạo Claims từ UserDto
             var userClaims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, userDto.Id.ToString()),
-                new Claim(ClaimTypes.Name, userDto.Username),
-                new Claim("full_name", userDto.FullName),
-                new Claim("IsActive", "True") // Add the IsActive claim
+                new Claim(JwtRegisteredClaimNames.Sub, userDto.Id.ToString()), // Đổi NameIdentifier thành Sub
+                new Claim(JwtRegisteredClaimNames.UniqueName, userDto.Username), // Đổi Name thành UniqueName
+                new Claim("short_name", userDto.ShortName),
+                new Claim("IsActive", "True")
             };
 
-            // Thêm các vai trò vào Claims
-            var roles = userDto.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            userClaims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            // Thêm vai trò đúng chuẩn
+            foreach (var role in userDto.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            {
+                userClaims.Add(new Claim(ClaimTypes.Role, role)); // Giữ nguyên ClaimTypes.Role
+            }
 
             // Tạo JWT
             var token = new JwtSecurityToken(

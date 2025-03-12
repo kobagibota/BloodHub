@@ -1,9 +1,11 @@
 ﻿using BloodHub.Api.Services;
 using BloodHub.Shared.Request;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BloodHub.Api.Controllers
 {
+    [Authorize(Policy = "ManagerOrAdmin")]
     [Route("api/[controller]")]
     [ApiController]
     public class UserController(IUserService userService) : ControllerBase
@@ -30,6 +32,7 @@ namespace BloodHub.Api.Controllers
             return result.Success ? Ok(result) : BadRequest(result);
         }
 
+        [Authorize(Policy = "ActiveUsersOnly")]
         [HttpGet("available-users-for-shift")]
         public async Task<IActionResult> GetAvailableUsersForShift()
         {
@@ -38,9 +41,9 @@ namespace BloodHub.Api.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateUser([FromBody] UserRequest user)
+        public async Task<IActionResult> CreateUser([FromBody] UserRequest request)
         {
-            var result = await _userService.Add(user);
+            var result = await _userService.Add(request);
             if (!result.Success || result.Data == null)
             {
                 return BadRequest(result);
@@ -55,14 +58,8 @@ namespace BloodHub.Api.Controllers
             var result = await _userService.Update(id, request);
             return result.Success ? Ok(result) : BadRequest(result);
         }
-
-        [HttpPatch("toggle-active/{id}")]
-        public async Task<IActionResult> ToggleActive(int id)
-        {
-            var result = await _userService.ToggleActiveAsync(id);
-            return result.Success ? Ok(result) : BadRequest(result);
-        }
-
+                
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {

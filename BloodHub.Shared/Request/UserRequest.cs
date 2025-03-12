@@ -2,11 +2,20 @@
 {
     public class UserRequest
     {
-        public string UserName { get; set; } = string.Empty;
-        public string FullName { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public required string Username { get; set; }
+
+        public required string Title { get; set; }          // chức danh
+
+        public required string FirstName { get; set; }      // Tên đệm
+
+        public required string LastName { get; set; }       // Họ
+
         public string? ContactInfo { get; set; } = string.Empty;
+
         public bool IsActive { get; set; } = true;
-        public List<string> Roles { get; set; } = new List<string>();
+
+        public bool IsOnDuty { get; set; } = true;
+
+        public IEnumerable<string> Roles { get; set; } = new List<string>();
     }
 }

@@ -1,5 +1,216 @@
-﻿<h3>UserDialog</h3>
+﻿@using BloodHub.Client.Services
+@using BloodHub.Shared.Entities
+@using BloodHub.Shared.DTOs
+@using BloodHub.Shared.Request
+
+@inject UserService UserService
+@inject RoleService RoleService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" Model="@User" OnValidSubmit="OnValidSubmit" Spacing="3">
+            <MudTextField Label="Tên đăng nhập" @bind-Value="User.Username" Variant="Variant.Outlined"
+            Required="true" RequiredError="Tên đăng nhập không được để trống" FullWidth="true" Disabled="User.Id != 0" @ref="userNameInput"  />
+
+            <MudTextField @bind-Value="User.Title" Label="Chức danh" Variant="Variant.Outlined"
+                          Required="true" RequiredError="Chức danh không được để trống" FullWidth="true" @ref="fullNameInput" />
+
+            <MudTextField @bind-Value="User.LastName" Label="Họ lót" Variant="Variant.Outlined"
+                          Required="true" RequiredError="Họ lót không được để trống" FullWidth="true" />
+
+            <MudTextField @bind-Value="User.FirstName" Label="Tên" Variant="Variant.Outlined"
+                          Required="true" RequiredError="Tên không được để trống" FullWidth="true" />
+            
+                          <MudSelect Label="Vai trò" @bind-SelectedValues="User.Roles" MultiSelection="true" Dense="true" SelectAll="true">
+                @if (RolesList != null && RolesList.Any())
+                {
+                    @foreach (var role in RolesList)
+                    {
+                        <MudSelectItem Value="@role">@role</MudSelectItem>
+                    }
+                }
+            </MudSelect>
+
+			<MudTextField @bind-Value="User.ContactInfo" Label="Thông tin liên hệ" Variant="Variant.Outlined" FullWidth="true" />
+
+			<MudSwitch Label="Hoạt động" @bind-Value="User.IsActive" Color="Color.Success" />
+
+			<MudSwitch Label="Tham gia trực" @bind-Value="User.IsOnDuty" Color="Color.Info" />
+		</MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog" Color="Color.Secondary">Hủy</MudButton>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="isLoading" OnClick="SubmitForm">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Small" />
+            }
+            else
+            {
+                <MudText>@(User.Id == 0 ? "Thêm mới" : "Cập nhật")</MudText>
+            }
+        </MudButton>
+
+    </DialogActions>
+</MudDialog>
 
 @code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public UserDto User { get; set; } = new UserDto();
 
+    private IEnumerable<string> RolesList = new List<string>();
+
+    private UserDto originalUser = new();
+    private MudForm form = new MudForm();
+    private bool isLoading = false;
+    private bool isLoadingRole = false;
+
+    private MudTextField<string> userNameInput = new MudTextField<string>();
+    private MudTextField<string> fullNameInput = new MudTextField<string>();
+
+    protected override async void OnInitialized()
+    {
+        // Sao chép sâu đối tượng ban đầu
+        if (User != null)
+        {
+            originalUser = new UserDto
+            {
+                Id = User.Id,
+                Username = User.Username,
+				FirstName = User.FirstName,
+				LastName = User.LastName,
+				FullName = User.FullName,
+				ContactInfo = User.ContactInfo,
+				IsActive = User.IsActive,
+				IsOnDuty = User.IsOnDuty,
+				Roles = User.Roles
+            };
+        }
+
+        await LoadRoles();
+    }
+
+    private async Task LoadRoles()
+    {
+        try
+        {
+            isLoadingRole = true;
+            var response = await RoleService.GetAllRoles();
+            if (response.Success && response.Data != null)
+            {
+                RolesList = response.Data;
+            }
+            else
+            {
+                Snackbar.Add("Không thể tải danh sách vai trò!", Severity.Error);
+            }
+        }
+        finally
+        {
+            isLoadingRole = false;
+        }
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await FocusInput();
+        }
+    }
+
+    private async Task SubmitForm()
+    {
+        if (form != null)
+        {
+            await form.Validate();
+            if (form.IsValid)
+            {
+                await OnValidSubmit();
+            }
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        isLoading = true;
+
+        try
+        {
+            var userRerquest = new UserRequest
+            {
+                Username = User.Username,
+                Title = User.Title,
+                FirstName = User.FirstName,
+                LastName = User.LastName,
+                ContactInfo = User.ContactInfo,
+                IsActive = User.IsActive,
+                IsOnDuty = User.IsOnDuty,
+                Roles = User.Roles
+            };
+
+            var result = User.Id == 0
+                ? await UserService.CreateUser(userRerquest)
+                : await UserService.UpdateUser(User.Id, userRerquest);
+
+            if (!result.Success)
+            {
+                await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
+                await FocusInput();
+                isLoading = false;
+                return;
+            }
+            else
+            {
+                Snackbar.Add("Cập nhật thông tin người dùng thành công!", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            await DialogService.ShowMessageBox("Lỗi", $"Xảy ra lỗi {ex.Message}.");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CloseDialog()
+    {
+        // Khôi phục thông tin sản phẩm ban đầu khi nhấn "Hủy"
+        if (User != null)
+        {
+            User.Id = originalUser.Id;
+            User.Username = originalUser.Username;
+			User.FullName = originalUser.FullName;
+            User.ContactInfo = originalUser.ContactInfo;
+			User.IsActive = originalUser.IsActive;
+			User.Roles = originalUser.Roles;
+        }
+
+        MudDialog.Cancel();
+    }
+
+    private async Task FocusInput()
+    {
+        await Task.Delay(200); // Đợi một chút để đảm bảo rằng thông báo lỗi đã đóng
+        if (userNameInput != null && fullNameInput != null)
+        {
+            if (User.Id == 0)
+            {
+                await userNameInput.FocusAsync();
+            }
+            else
+            {
+                await fullNameInput.FocusAsync();
+            }
+        }
+    }
 }

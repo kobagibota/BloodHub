@@ -9,11 +9,12 @@
 
 @inject DoctorService DoctorService
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
 <PageTitle>Danh sách bác sĩ</PageTitle>
 
-<RoleAuthorizeView Roles="Manager,Admin,User"> 
+<RoleAuthorizeView Roles="Manager,Admin,User">
     <MudPaper Class="m-2" Elevation="3" >
         <!-- Table Section to Display Doctors -->
         <MudTable Items="doctors" FixedHeader="true" Dense="@dense" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
@@ -76,7 +77,7 @@
                     </AuthorizeView>
 
                     <!-- Delete Button -->
-                    <AuthorizeView Roles="Admin,Manager"> 
+                    <AuthorizeView Roles="Manager,Admin"> 
                         <Authorized Context="authContext">
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteDoctor(context.Id, context.DoctorName))">Xóa</MudIconButton>
                         </Authorized>
@@ -136,7 +137,7 @@
     }
 
     // Open the dialog to add or edit a doctor's information
-    private async Task OpenDoctorDialog(Doctor doctor)
+    private async Task OpenDoctorDialog(Doctor? doctor = null)
     {
         var parameters = new DialogParameters();
         parameters.Add("Doctor", doctor ?? new Doctor()); // Tạo đối tượng mới nếu doctor là null
@@ -169,6 +170,7 @@
             if (response.Success)
             {
                 await LoadDoctors(); // Làm mới danh sách
+                Snackbar.Add($"Đã xoá bác sĩ '{doctorName}' thành công!", Severity.Success);
             }
             else
             {

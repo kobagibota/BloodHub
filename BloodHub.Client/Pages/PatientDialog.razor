@@ -4,6 +4,7 @@
 
 @inject PatientService PatientService
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
 <MudDialog>
@@ -175,6 +176,10 @@
                 await FocusMedicalInput();
                 isLoading = false;
                 return;
+            }
+            else
+            {
+                Snackbar.Add("Cập nhật thông tin bệnh nhân thành công!", Severity.Success);
             }
 
             MudDialog.Close(DialogResult.Ok(true));

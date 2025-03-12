@@ -9,6 +9,7 @@
 
 @inject NursingService NursingService
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
 <PageTitle>Danh sách điều dưỡng</PageTitle>
@@ -76,7 +77,7 @@
                     </AuthorizeView>
 
                     <!-- Delete Button -->
-                    <AuthorizeView Roles="Admin,Manager"> 
+                    <AuthorizeView Roles="Manager,Admin"> 
                         <Authorized Context="authContext">
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteNursing(context.Id, context.NursingName))">Xóa</MudIconButton>
                         </Authorized>
@@ -169,6 +170,7 @@
             if (response.Success)
             {
                 await LoadNursings(); // Làm mới danh sách
+                Snackbar.Add($"Đã xoá điều dưỡng '{nursingName}' thành công!", Severity.Success);
             }
             else
             {

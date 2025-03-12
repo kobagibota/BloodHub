@@ -2,10 +2,8 @@ using BloodHub.Api.Extensions;
 using BloodHub.Api.Services;
 using BloodHub.Data.Data;
 using BloodHub.Data.Repositories;
-using BloodHub.Shared.Entities;
 using BloodHub.Shared.Interfaces;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.OpenApi.Models;
@@ -49,30 +47,30 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Settings for Identity
-builder.Services.AddIdentity<User, Role>(options =>
-{
-    options.User.RequireUniqueEmail = false;
-    options.SignIn.RequireConfirmedEmail = false; 
-})
-    .AddRoles<Role>()
-    .AddEntityFrameworkStores<AppDbContext>()
-    .AddDefaultTokenProviders();
+//// Settings for Identity
+//builder.Services.AddIdentity<User, Role>(options =>
+//{
+//    options.User.RequireUniqueEmail = false;
+//    options.SignIn.RequireConfirmedEmail = false; 
+//})
+//    .AddRoles<Role>()
+//    .AddEntityFrameworkStores<AppDbContext>()
+//    .AddDefaultTokenProviders();
 
-// Settings for Password & Lockout
-builder.Services.Configure<IdentityOptions>(options =>
-{
-    options.Password.RequireDigit = false;
-    options.Password.RequireLowercase = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 4;
+//// Settings for Password & Lockout
+//builder.Services.Configure<IdentityOptions>(options =>
+//{
+//    options.Password.RequireDigit = false;
+//    options.Password.RequireLowercase = false;
+//    options.Password.RequireUppercase = false;
+//    options.Password.RequireNonAlphanumeric = false;
+//    options.Password.RequiredLength = 4;
 
-    // Settings for Lockout (lockout for after 5 minutes)
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.AllowedForNewUsers = true;
-});
+//    // Settings for Lockout (lockout for after 5 minutes)
+//    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+//    options.Lockout.MaxFailedAccessAttempts = 5;
+//    options.Lockout.AllowedForNewUsers = true;
+//});
 
 // Settings Authentication and Authorization
 builder.Services.AddAuthorizationPolicies();
@@ -94,7 +92,7 @@ builder.Services.AddScoped<IAuthTokenService, AuthTokenService>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<RoleManager<Role>>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddScoped<IChangeLogService, ChangeLogService>();      // Log
 builder.Services.AddScoped<RequestInfoProvider>();                      // RequestInfoProvider get UserId, IPAddress, UserAgent from Token

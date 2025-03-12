@@ -132,7 +132,7 @@ namespace BloodHub.Client.Services
             }
 
             var jwtToken = new JwtSecurityTokenHandler().ReadToken(accessToken) as JwtSecurityToken;
-            return jwtToken?.Claims.FirstOrDefault(c => c.Type == "full_name")?.Value ?? "Khách";
+            return jwtToken?.Claims.FirstOrDefault(c => c.Type == "short_name")?.Value ?? "Khách";
         }
 
         public async Task<ServiceResponse<bool>> ChangePasswordAsync(ChangePasswordDto changePasswordDto)

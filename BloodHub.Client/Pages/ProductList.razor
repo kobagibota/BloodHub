@@ -13,7 +13,7 @@
 
 <PageTitle>Danh sách sản phẩm</PageTitle>
 
-<RoleAuthorizeView Roles="Manager,Admin,User"> 
+<RoleAuthorizeView Roles="Manager,Admin"> 
     <MudPaper Class="m-2" Elevation="3" >
         <!-- Table Section to Display Products -->
         <MudTable Items="products" FixedHeader="true" Dense="@dense" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
@@ -68,7 +68,7 @@
                     </AuthorizeView>
 
                     <!-- Delete Button -->
-                    <AuthorizeView Roles="Admin,Manager"> 
+                    <AuthorizeView Policy="ManagerOrAdmin"> 
                         <Authorized Context="authContext">
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteProduct(context.Id, context))">Xóa</MudIconButton>
                         </Authorized>
@@ -128,7 +128,7 @@
     }
 
     // Open the dialog to add or edit a product's information
-    private async Task OpenProductDialog(Product product)
+    private async Task OpenProductDialog(Product? product)
     {
         var parameters = new DialogParameters();
         parameters.Add("Product", product ?? new Product()); // Tạo đối tượng mới nếu product là null

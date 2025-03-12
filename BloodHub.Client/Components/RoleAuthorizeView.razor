@@ -10,6 +10,6 @@
 </AuthorizeView>
 
 @code {
-    [Parameter] public string Roles { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Roles { get; set; } = string.Empty;
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }

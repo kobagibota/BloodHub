@@ -13,7 +13,7 @@
 
 <PageTitle>Danh sách khoa phòng</PageTitle>
 
-<RoleAuthorizeView Roles="Manager,Admin,User"> 
+<RoleAuthorizeView Roles="Manager,Admin"> 
     <MudPaper Class="m-2" Elevation="3" >
         <!-- Table Section to Display Wards -->
         <MudTable Items="wards" FixedHeader="true" Dense="@dense" Striped="true" Hover="true" Bordered="true" Loading="isLoading"
@@ -65,7 +65,7 @@
                     </AuthorizeView>
 
                     <!-- Delete Button -->
-                    <AuthorizeView Roles="Admin,Manager"> 
+                    <AuthorizeView Roles="Manager,Admin"> 
                         <Authorized Context="authContext">
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="@(() => ConfirmDeleteWard(context.Id, context.WardName))">Xóa</MudIconButton>
                         </Authorized>
@@ -125,7 +125,7 @@
     }
 
     // Open the dialog to add or edit a ward's information
-    private async Task OpenWardDialog(Ward ward)
+    private async Task OpenWardDialog(Ward? ward)
     {
         var parameters = new DialogParameters();
         parameters.Add("Ward", ward ?? new Ward()); // Tạo đối tượng mới nếu ward là null

@@ -3,6 +3,7 @@
 
 @inject DoctorService DoctorService
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
 <MudDialog>
@@ -83,12 +84,18 @@
                 ? await DoctorService.CreateDoctor(Doctor)
                 : await DoctorService.UpdateDoctor(Doctor.Id, Doctor);
 
+			string message = Doctor.Id == 0 ? "Thêm mới" : "Cập nhật thông tin";
+
             if (!result.Success)
             {
                 await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
                 await FocusDoctorNameInput();
                 isLoading = false;
                 return;
+            }
+            else
+            {
+                Snackbar.Add($"{message} bác sĩ thành công!", Severity.Success);
             }
 
             MudDialog.Close(DialogResult.Ok(true));

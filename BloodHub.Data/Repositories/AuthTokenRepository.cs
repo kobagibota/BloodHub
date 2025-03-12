@@ -12,16 +12,20 @@ namespace BloodHub.Data.Repositories
         {
         }
 
-        public async Task<AuthToken?> GetByTokenAsync(string token)
+        // Lấy token theo hash (so sánh bằng BCrypt)
+        public async Task<AuthToken?> GetByTokenAsync(string tokenHash)
         {
-            return await _dbContext.Set<AuthToken>().FirstOrDefaultAsync(x => x.Token == token);
+            var tokens = await _dbContext.Set<AuthToken>().ToListAsync();
+            return tokens.FirstOrDefault(t => BCrypt.Net.BCrypt.Verify(tokenHash, t.TokenHash));
         }
 
+        // Lấy danh sách token của user theo loại token
         public async Task<IEnumerable<AuthToken>> GetTokensByUserIdAsync(int userId, TokenType tokenType)
         {
             return await _dbContext.Set<AuthToken>().Where(at => at.UserId == userId && at.TokenType == tokenType && at.IsActive).ToListAsync();
         }
 
+        // Thu hồi tất cả token của user theo loại
         public async Task RevokeTokensByTypeAsync(int userId, TokenType tokenType)
         {
             var tokens = await GetTokensByUserIdAsync(userId, tokenType);

@@ -30,7 +30,7 @@
                               Class="mt-0" Style="margin-right: 12px;" Disabled="@isLoading" />
 
                 <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add"
-                           Color="Color.Info" OnClick="@(() => OpenUserDialog(new UserDto()))"
+                           Color="Color.Info" OnClick="@(() => OpenUserDialog())"
                            Size="Size.Medium" Disabled="@isLoading">
                     Thêm mới
                 </MudButton>            
@@ -46,7 +46,7 @@
 
             <HeaderContent>
                 <MudTh>
-                    <MudTableSortLabel SortBy="new Func<UserDto, object>(x => x.UserName)">Tên đăng nhập</MudTableSortLabel>
+                    <MudTableSortLabel SortBy="new Func<UserDto, object>(x => x.Username)">Tên đăng nhập</MudTableSortLabel>
                 </MudTh>
                 <MudTh>
                     <MudTableSortLabel SortBy="new Func<UserDto, object>(x => x.FullName)">Họ và tên</MudTableSortLabel>
@@ -59,17 +59,30 @@
             </HeaderContent>
 
             <RowTemplate>
-                <MudTd DataLabel="Tên đăng nhập">@context.UserName</MudTd>
+                <MudTd DataLabel="Tên đăng nhập">@context.Username</MudTd>
                 <MudTd DataLabel="Họ và tên">@context.FullName</MudTd>
 
                 <MudTd DataLabel="Trạng thái" Style="text-align:center ; display: flex; justify-content: center; align-items: center;">
-                    <MudSwitch @bind-Value="context.IsActive" Color="Color.Success" onclick="@(async () => await ToggleUserStatus(context.Id))" />
+                    <MudChip T="string" Variant="Variant.Text" Color="@(context.IsActive ? Color.Success : Color.Error)">
+                        @(context.IsActive ? "Hoạt động" : "Tạm khoá")
+                    </MudChip>
+
+                    <MudChip T="string" Variant="Variant.Text" Color="@(context.IsOnDuty ? Color.Surface : Color.Warning)">
+                        @(context.IsOnDuty ? "Tham gia trực" : "Không trực")
+                    </MudChip>
                 </MudTd>
 
                 <MudTd DataLabel="Vai trò">
-                    @foreach (var role in context.Roles)
+                    @if (context.Roles.Any())
                     {
-                        <MudChip T="string" Variant="Variant.Text" Color="Color.Primary">@role</MudChip>
+                        @foreach (var role in context.Roles)
+                        {
+                            <MudChip T="string" Variant="Variant.Text" Color="Color.Primary">@role</MudChip>
+                        }
+                    }
+                    else
+                    {
+                        <MudChip T="string" Variant="Variant.Text" Color="Color.Secondary">Chưa có</MudChip>
                     }
                 </MudTd>
 
@@ -123,24 +136,31 @@
     {
         if (string.IsNullOrWhiteSpace(searchString))
             return true;
-        if (element.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (element.Username.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true;
         if (element.FullName != null && element.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true;
         return false;
     }
 
-    private async Task OpenUserDialog(UserDto user)
+    private async Task OpenUserDialog(UserDto? user = null)
     {
-        var parameters = new DialogParameters { { "User", user ?? new UserDto() } };
-        var dialog = DialogService.Show<UserDialog>(user == null ? "Thêm mới người dùng" : "Chỉnh sửa người dùng", parameters);
+        var parameters = new DialogParameters();
+        parameters.Add("User", user ?? new UserDto());
+
+        string title = (user == null) ? "Thêm mới người dùng" : "Chỉnh sửa người dùng";
+        var dialog = DialogService.Show<UserDialog>(title, parameters);
+
         var result = await dialog.Result;
-        if (result != null && !result.Canceled) await LoadUsers();
+        if (result != null && !result.Canceled)
+        {
+            await LoadUsers();
+        }
     }
 
     private async Task ConfirmDeleteUser(UserDto user)
     {
-        var parameters = new DialogParameters { { "ContentText", $"Bạn có chắc chắn muốn xóa '{user.UserName}'?" } };
+        var parameters = new DialogParameters { { "ContentText", $"Bạn có chắc chắn muốn xóa '{user.Username}'?" } };
         var dialog = DialogService.Show<ConfirmDialog>("Xác nhận", parameters);
         var result = await dialog.Result;
         if (result?.Canceled == false)
@@ -154,19 +174,6 @@
             {
                 await DialogService.ShowMessageBox("Lỗi", response.Message);
             }
-        }
-    }
-
-    private async Task ToggleUserStatus(int userId)
-    {
-        var response = await UserService.ToggleActive(userId);
-        if (!response.Success)
-        {
-            await DialogService.ShowMessageBox("Lỗi", response.Message);
-        }
-        else
-        {
-            Snackbar.Add("Cập nhật trạng thái thành công!", Severity.Success);
         }
     }
 

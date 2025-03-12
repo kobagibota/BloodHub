@@ -3,6 +3,7 @@
 
 @inject NursingService NursingService
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
 <MudDialog>
@@ -83,12 +84,18 @@
                 ? await NursingService.CreateNursing(Nursing)
                 : await NursingService.UpdateNursing(Nursing.Id, Nursing);
 
+            string message = Nursing.Id == 0 ? "Thêm mới" : "Cập nhật thông tin";
+
             if (!result.Success)
             {
                 await DialogService.ShowMessageBox("Trùng dữ liệu", result.Message);
                 await FocusNursingNameInput();
                 isLoading = false;
                 return;
+            }
+            else
+            {
+                Snackbar.Add($"{message} điều dưỡng thành công!", Severity.Success);
             }
 
             MudDialog.Close(DialogResult.Ok(true));

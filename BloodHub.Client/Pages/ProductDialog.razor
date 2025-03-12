@@ -3,6 +3,7 @@
 
 @inject ProductService ProductService
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <MudDialog>
     <DialogContent>
@@ -89,6 +90,10 @@
                 await FocusProductNameInput();
                 isLoading = false;
                 return;
+            }
+            else
+            {
+                Snackbar.Add("Cập nhật thông tin sản phẩm thành công!", Severity.Success);
             }
 
             MudDialog.Close(DialogResult.Ok(true));

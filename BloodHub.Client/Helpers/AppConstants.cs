@@ -101,5 +101,14 @@
             public const string Delete = "api/user/delete";
             public const string GetAvailableUsersForShifts = "api/user/available-users-for-shift";
         }
+
+        // Endpoint Role
+        public static class RoleEndpoints
+        {
+            public const string GetAll = "api/role";
+            public const string GetById = "api/role/getbyid";
+            public const string Create = "api/role/create";
+            public const string Delete = "api/role/delete";
+        }
     }
 }

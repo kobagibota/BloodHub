@@ -33,14 +33,14 @@ namespace BloodHub.Client.Services
             // Thiết lập tiêu đề chứa token xác thực cho HttpClient  
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var claims = ParseClaimsFromJwt(token);
-            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwt"));
+            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(claims, "jwtAuth"));
 
             return new AuthenticationState(authenticatedUser);
         }
 
         public void NotifyUserAuthentication(string token)
         {
-            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt"));
+            var authenticatedUser = new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwtAuth"));
             NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(authenticatedUser)));
         }
 
@@ -58,11 +58,33 @@ namespace BloodHub.Client.Services
 
             if (keyValuePairs != null)
             {
-                claims.AddRange(keyValuePairs.Select(kvp => new Claim(kvp.Key, kvp.Value?.ToString() ?? string.Empty)));
+                foreach (var kvp in keyValuePairs)
+                {
+                    // Xử lý đặc biệt cho Role (array)
+                    if (kvp.Key == ClaimTypes.Role || kvp.Key == "role" || kvp.Key == "roles")
+                    {
+                        if (kvp.Value is JsonElement { ValueKind: JsonValueKind.Array } rolesArray)
+                        {
+                            foreach (var role in rolesArray.EnumerateArray())
+                            {
+                                claims.Add(new Claim(ClaimTypes.Role, role.GetString() ?? string.Empty));
+                            }
+                        }
+                        else
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, kvp.Value?.ToString() ?? string.Empty));
+                        }
+                    }
+                    else
+                    {
+                        claims.Add(new Claim(kvp.Key, kvp.Value?.ToString() ?? string.Empty));
+                    }
+                }
             }
 
             return claims;
         }
+
 
         private byte[] ParseBase64WithoutPadding(string base64)
         {

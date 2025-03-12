@@ -8,9 +8,13 @@ namespace BloodHub.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.HasIndex(x => x.UserName).IsUnique();
-            builder.Property(x => x.UserName).IsUnicode(false);
+            builder.ToTable("AppUsers");
+            builder.HasIndex(x => x.Username).IsUnique();
+            builder.Property(x => x.Username).IsUnicode(false);
             builder.Property(x => x.CreatedAt).HasDefaultValueSql("GetDate()").ValueGeneratedOnAdd();
+            builder.Property(x => x.IsActive).HasDefaultValue(true).ValueGeneratedOnAdd();
+            builder.Property(x => x.MustChangePassword).HasDefaultValue(true).ValueGeneratedOnAdd();
+            builder.Property(x => x.IsOnDuty).HasDefaultValue(true).ValueGeneratedOnAdd();
         }
     }
 }
